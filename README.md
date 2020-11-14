@@ -6,3 +6,7 @@
 
 ## References
 - https://raspberrypi.stackexchange.com/a/94207
+
+## Useful Development Tools
+- `pinout` command from `gpiozero` package
+- `gpio readall` from `wiringpi` package, to get GPIO readings. Call with `watch -n 1 gpio readall` to do 1s polling read.
