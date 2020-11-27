@@ -35,7 +35,7 @@ PIN_LEDS = [
 ## IO Definitions END
 
 ## Songs BEGIN
-songs = [
+SONGS = [
         "music/beetje_bang.mp3",
         "music/fitlala.mp3",
         "music/hello_dangdut.mp3",
@@ -49,44 +49,45 @@ logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
 
 logging.info("Initializing GPIO")
 
-led_states = [False] * len(PIN_LEDS)
+g_led_states = [False] * len(PIN_LEDS)
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 GPIO.setup(PIN_LEDS, GPIO.OUT)
-GPIO.output(PIN_LEDS, led_states)
+GPIO.output(PIN_LEDS, g_led_states)
 
 GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 logging.info("GPIO Pins initialized")
 
 logging.info("Initializing VLC")
 import vlc
-vlc_instance = vlc.Instance("--aout=alsa")
-player = vlc_instance.media_player_new()
-player.audio_set_volume(100)
+g_vlc_instance = vlc.Instance("--aout=alsa")
+g_player = g_vlc_instance.media_player_new()
+g_player.audio_set_volume(100)
 logging.info("VLC initialized")
 
 g_active_song_idx = None
 
-def play_song(song_path):
+
+def _play_song(song_path):
     logging.info(f"playing media: {song_path}")
-    player.stop()
-    player.set_media(vlc_instance.media_new(song_path))
-    player.play()
+    g_player.stop()
+    g_player.set_media(g_vlc_instance.media_new(song_path))
+    g_player.play()
 
 
-def cb(channel):
+def _cb(channel):
     global g_active_song_idx
 
     idx = PIN_BUTTONS.index(channel)
     logging.debug(f"button press {idx}")
 
-    assert idx < len(songs), f"song index non-existent: {idx}"
-    song_path = songs[idx]
+    assert idx < len(SONGS), f"song index non-existent: {idx}"
+    song_path = SONGS[idx]
 
-    led_states[idx] = not led_states[idx]
-    GPIO.output(PIN_LEDS[idx], led_states[idx])
+    g_led_states[idx] = not g_led_states[idx]
+    GPIO.output(PIN_LEDS[idx], g_led_states[idx])
 
 
 def _shutdown_routine():
@@ -96,10 +97,10 @@ def _shutdown_routine():
 
 def main():
     logging.info("Initializing songs")
-    for i in range(len(songs)):
-        logging.info(f"Initializing song {songs[i]}")
+    for i in range(len(SONGS)):
+        logging.info(f"Initializing song {SONGS[i]}")
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-                callback=cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
+                callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
         GPIO.output(PIN_LEDS[i], True)
         sleep(0.1)
         GPIO.output(PIN_LEDS[i], False)
@@ -108,6 +109,7 @@ def main():
 
     while True:
         try:
+            # TODO: do stuff here
             sleep(0.1)
         except KeyboardInterrupt:
             logging.info("Exiting program")
