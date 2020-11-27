@@ -83,6 +83,24 @@ def _find_songs() -> list:
     return found_files
 
 
+def _init_songs_button_binding():
+    global g_songs
+    logging.info("Initializing songs")
+    g_songs = _find_songs()
+
+    for i in range(len(g_songs)):
+        if i >= len(PIN_BUTTONS):
+            logging.info(f"Ignoring song because no buttons left: {g_songs[i]}")
+            continue
+
+        logging.info(f"Initializing button for {g_songs[i]}")
+        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
+                callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
+        GPIO.output(PIN_LEDS[i], True)
+        sleep(0.1)
+        GPIO.output(PIN_LEDS[i], False)
+
+
 def _play_song(song_path: str):
     logging.info(f"playing media: {song_path}")
     g_player.stop()
@@ -121,40 +139,31 @@ def _shutdown_routine():
     GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))
 
 
-def main():
+def _loop_routine():
     global g_active_song_idx
-    global g_songs
-    logging.info("Initializing songs")
-    g_songs = _find_songs()
+    global g_led_states
 
-    for i in range(len(g_songs)):
-        if i >= len(PIN_BUTTONS):
-            logging.info(f"Ignoring song because no buttons left: {g_songs[i]}")
-            continue
+    g_led_states = [False]*len(PIN_LEDS)
 
-        logging.info(f"Initializing button for {g_songs[i]}")
-        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-                callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
-        GPIO.output(PIN_LEDS[i], True)
-        sleep(0.1)
-        GPIO.output(PIN_LEDS[i], False)
+    if g_active_song_idx is not None:
+        song_position = g_player.get_position()
+        logging.debug(f"song position = {song_position:.4f}")
+        if -1 < song_position < SONG_END_POSITION:
+            g_led_states[g_active_song_idx] = True
+        elif song_position > SONG_END_POSITION:
+            logging.info("Song reaches end")
+            g_active_song_idx = None
 
-    logging.info("ready")
+    GPIO.output(PIN_LEDS, g_led_states)
+
+
+def main():
+    _init_songs_button_binding()
+    logging.info("Jukebox ready")
 
     while True:
         try:
-            g_led_states = [False]*len(PIN_LEDS)
-
-            if g_active_song_idx is not None:
-                song_position = g_player.get_position()
-                logging.debug(f"song position = {song_position:.4f}")
-                if -1 < song_position < SONG_END_POSITION:
-                    g_led_states[g_active_song_idx] = True
-                elif song_position > SONG_END_POSITION:
-                    logging.info("Song reaches end")
-                    g_active_song_idx = None
-
-            GPIO.output(PIN_LEDS, g_led_states)
+            _loop_routine()
             sleep(1.0/float(LOOP_HZ))
         except KeyboardInterrupt:
             logging.info("Exiting program")
