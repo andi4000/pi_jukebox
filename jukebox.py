@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 from signal import pause
 from time import sleep
 import sys
+import os
 import logging
 
 IS_DEBUG = False
@@ -86,6 +87,12 @@ def _play_song(song_path: str):
     if IS_DEBUG: g_player.set_position(0.97)
 
 
+def _get_file_absolute_path(relative_path: str) -> str:
+    pwd = os.path.dirname(os.path.realpath(__file__))
+    file_absolute_path = f"{pwd}/{relative_path}"
+    return file_absolute_path
+
+
 def _cb(channel):
     global g_active_song_idx
 
@@ -93,7 +100,7 @@ def _cb(channel):
     logging.debug(f"button press {idx}")
 
     assert idx < len(SONGS), f"song index non-existent: {idx}"
-    song_path = SONGS[idx]
+    song_path = _get_file_absolute_path(SONGS[idx])
 
     if g_active_song_idx is None:
         logging.info(f"Playing new song #{idx}")
@@ -120,7 +127,7 @@ def main():
 
     logging.info("Initializing songs")
     for i in range(len(SONGS)):
-        logging.info(f"Initializing song {SONGS[i]}")
+        logging.info(f"Initializing buttons for {SONGS[i]}")
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
                 callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
         GPIO.output(PIN_LEDS[i], True)
