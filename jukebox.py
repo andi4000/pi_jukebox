@@ -5,6 +5,7 @@ from signal import pause
 from time import sleep
 import sys
 import os
+import glob
 import logging
 
 IS_DEBUG = False
@@ -40,14 +41,7 @@ PIN_LEDS = [
 
 ## Songs BEGIN
 SONG_END_POSITION = 0.990  # for VLC get_position()
-
-SONGS = [
-        "music/beetje_bang.mp3",
-        "music/fitlala.mp3",
-        "music/hello_dangdut.mp3",
-        "music/maja_tanz.mp3",
-        "music/skj88.mp3"
-        ]
+SONGS_DIR = "music"
 ## Songs END
 
 logging_level = logging.INFO
@@ -77,6 +71,15 @@ g_player.audio_set_volume(100)
 logging.info("VLC initialized")
 
 g_active_song_idx = None
+g_songs = []  # to hold mp3 file paths
+
+
+def _find_songs() -> list:
+    pwd = os.path.dirname(os.path.realpath(__file__))
+    found_files = glob.glob(f"{pwd}/{SONGS_DIR}/*.mp3")
+    logging.info(f"Found {len(found_files)} songs")
+    logging.debug(f"found following files: {found_files}")
+    return found_files
 
 
 def _play_song(song_path: str):
@@ -87,20 +90,15 @@ def _play_song(song_path: str):
     if IS_DEBUG: g_player.set_position(0.97)
 
 
-def _get_file_absolute_path(relative_path: str) -> str:
-    pwd = os.path.dirname(os.path.realpath(__file__))
-    file_absolute_path = f"{pwd}/{relative_path}"
-    return file_absolute_path
-
-
 def _cb(channel):
     global g_active_song_idx
+    global g_songs
 
     idx = PIN_BUTTONS.index(channel)
     logging.debug(f"button press {idx}")
 
-    assert idx < len(SONGS), f"song index non-existent: {idx}"
-    song_path = _get_file_absolute_path(SONGS[idx])
+    assert idx < len(g_songs), f"song index non-existent: {idx}"
+    song_path = g_songs[idx]
 
     if g_active_song_idx is None:
         logging.info(f"Playing new song #{idx}")
@@ -124,10 +122,12 @@ def _shutdown_routine():
 
 def main():
     global g_active_song_idx
-
+    global g_songs
     logging.info("Initializing songs")
-    for i in range(len(SONGS)):
-        logging.info(f"Initializing buttons for {SONGS[i]}")
+    g_songs = _find_songs()
+
+    for i in range(len(g_songs)):
+        logging.info(f"Initializing buttons for {g_songs[i]}")
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
                 callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
         GPIO.output(PIN_LEDS[i], True)
