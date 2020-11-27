@@ -52,13 +52,11 @@ logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
 
 logging.info("Initializing GPIO")
 
-g_led_states = [False] * len(PIN_LEDS)
-
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 GPIO.setup(PIN_LEDS, GPIO.OUT)
-GPIO.output(PIN_LEDS, g_led_states)
+GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))  # Turn off all LEDs
 
 GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 logging.info("GPIO Pins initialized")
@@ -141,20 +139,19 @@ def _shutdown_routine():
 
 def _loop_routine():
     global g_active_song_idx
-    global g_led_states
 
-    g_led_states = [False]*len(PIN_LEDS)
+    led_states = [False]*len(PIN_LEDS)
 
     if g_active_song_idx is not None:
         song_position = g_player.get_position()
         logging.debug(f"song position = {song_position:.4f}")
         if -1 < song_position < SONG_END_POSITION:
-            g_led_states[g_active_song_idx] = True
+            led_states[g_active_song_idx] = True
         elif song_position > SONG_END_POSITION:
             logging.info("Song reaches end")
             g_active_song_idx = None
 
-    GPIO.output(PIN_LEDS, g_led_states)
+    GPIO.output(PIN_LEDS, led_states)
 
 
 def main():
