@@ -78,12 +78,12 @@ logging.info("VLC initialized")
 g_active_song_idx = None
 
 
-def _play_song(song_path):
+def _play_song(song_path: str):
     logging.info(f"playing media: {song_path}")
     g_player.stop()
     g_player.set_media(g_vlc_instance.media_new(song_path))
     g_player.play()
-    if IS_DEBUG: g_player.set_position(0.97)  # DEBUG
+    if IS_DEBUG: g_player.set_position(0.97)
 
 
 def _cb(channel):
