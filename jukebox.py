@@ -127,7 +127,11 @@ def main():
     g_songs = _find_songs()
 
     for i in range(len(g_songs)):
-        logging.info(f"Initializing buttons for {g_songs[i]}")
+        if i >= len(PIN_BUTTONS):
+            logging.info(f"Ignoring song because no buttons left: {g_songs[i]}")
+            continue
+
+        logging.info(f"Initializing button for {g_songs[i]}")
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
                 callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
         GPIO.output(PIN_LEDS[i], True)
