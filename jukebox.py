@@ -84,8 +84,13 @@ def cb(channel):
     GPIO.output(PIN_LEDS[idx], led_states[idx])
 
 
-for i in range(len(PIN_LEDS)):
-    GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-            callback=cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
+def main():
+    for i in range(len(PIN_LEDS)):
+        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
+                callback=cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
 
-pause()
+    logging.info("ready")
+    pause()
+
+if __name__ == "__main__":
+    main()
