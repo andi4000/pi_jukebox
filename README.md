@@ -24,7 +24,7 @@ Simple jukebox with Raspberry Pi. Songs will be played when buttons are pressed.
 - or make it autostart with adding this entry to `/etc/rc.local`
 
 ```bash
-python3 /path/to/jukebox.py > /dev/null 2>&1
+su pi -c "python3 /path/to/jukebox.py > /dev/null 2>&1"
 ```
 
 ## Notes
