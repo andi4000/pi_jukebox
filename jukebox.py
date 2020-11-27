@@ -79,6 +79,7 @@ def _find_songs() -> list:
     found_files = glob.glob(f"{pwd}/{SONGS_DIR}/*.mp3")
     logging.info(f"Found {len(found_files)} songs")
     logging.debug(f"found following files: {found_files}")
+    found_files.sort()
     return found_files
 
 
