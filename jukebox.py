@@ -3,6 +3,7 @@
 import RPi.GPIO as GPIO
 from signal import pause
 from time import sleep
+import sys
 import logging
 
 ## IO Definitions BEGIN
@@ -80,17 +81,38 @@ def cb(channel):
 
     idx = PIN_BUTTONS.index(channel)
     logging.debug(f"button press {idx}")
+
+    assert idx < len(songs), f"song index non-existent: {idx}"
+    song_path = songs[idx]
+
     led_states[idx] = not led_states[idx]
     GPIO.output(PIN_LEDS[idx], led_states[idx])
 
 
+def _shutdown_routine():
+    logging.debug("Turning off LEDS")
+    GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))
+
+
 def main():
-    for i in range(len(PIN_LEDS)):
+    logging.info("Initializing songs")
+    for i in range(len(songs)):
+        logging.info(f"Initializing song {songs[i]}")
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
                 callback=cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
+        GPIO.output(PIN_LEDS[i], True)
+        sleep(0.1)
+        GPIO.output(PIN_LEDS[i], False)
 
     logging.info("ready")
-    pause()
+
+    while True:
+        try:
+            sleep(0.1)
+        except KeyboardInterrupt:
+            logging.info("Exiting program")
+            _shutdown_routine()
+            sys.exit()
 
 if __name__ == "__main__":
     main()
