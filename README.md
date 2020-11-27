@@ -10,7 +10,7 @@ Simple jukebox with Raspberry Pi. Songs will be played when buttons are pressed.
 1. Get Raspberry Pi
 2. Get push buttons with LEDs and wire them properly with resistors
 3. Use `gpio readall` and `pinout` to find out pin numbering (see "Useful Development Tools" below)
-4. Configure pin numbering in `jukebox.py` script
+4. Configure the BCM pin numbering for the buttons and LEDs(from `gpio readall`) in `jukebox.py` script
 
 ## Usage
 - clone repo
