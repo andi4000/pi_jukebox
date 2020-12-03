@@ -133,8 +133,9 @@ def _cb(channel):
 
 
 def _shutdown_routine():
-    logging.debug("Turning off LEDS")
+    logging.debug("Turning off LEDS and shutting down")
     GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))
+    GPIO.cleanup()
 
 
 def _loop_routine():
