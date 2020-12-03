@@ -31,6 +31,8 @@ su pi -c "python3 /path/to/jukebox.py > /dev/null 2>&1"
 - For some reason `gpiozero`'s `when_pressed()` doesn't register button press properly, events are often missed. Older `RPi.GPIO` (v0.7) works much better and reliable.
 
 ## Open TODOs
+- Organize the files like a proper Python project
+- Generalize method to playback song X on button press Y, so that user can skip button order
 - Make button blink on song playback, or
 - some LED gimmick for fun
 - check if `python3-vlc` apt package is enough or are the following packages really required `vlc-bin vlc-plugin-base`
