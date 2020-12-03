@@ -7,6 +7,7 @@ import sys
 import os
 import glob
 import logging
+from button_handler import ButtonHandler
 
 IS_DEBUG = False
 LOOP_HZ = 20
@@ -24,7 +25,7 @@ PIN_BUTTONS = [
         3   # 7
         ]
 
-DEFAULT_BOUNCE_TIME_MS = 200
+DEFAULT_BOUNCE_TIME_MS = 100
 
 PIN_LEDS = [
         17, # 0
@@ -86,14 +87,23 @@ def _init_songs_button_binding():
     logging.info("Initializing songs")
     g_songs = _find_songs()
 
+    # TODO: figure out if lifecycle of this could cause problem
+    button_handlers = []
+
     for i in range(len(g_songs)):
         if i >= len(PIN_BUTTONS):
             logging.info(f"Ignoring song because no buttons left: {g_songs[i]}")
             continue
 
         logging.info(f"Initializing button for {g_songs[i]}")
+
+        # "falling" because of the Pull-Up (button state defaults to 1)
+        button_handlers.append(ButtonHandler(PIN_BUTTONS[i], _cb,
+            edge="falling", bouncetime=DEFAULT_BOUNCE_TIME_MS))
+
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-                callback=_cb, bouncetime=DEFAULT_BOUNCE_TIME_MS)
+                callback=button_handlers[i])
+
         GPIO.output(PIN_LEDS[i], True)
         sleep(0.1)
         GPIO.output(PIN_LEDS[i], False)
