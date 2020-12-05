@@ -43,3 +43,9 @@ su pi -c "python3 /path/to/jukebox.py > /dev/null 2>&1"
 ## Useful Development Tools
 - `pinout` command from `gpiozero` package
 - `gpio readall` from `wiringpi` package, to get GPIO readings. Call with `watch -n 0.1 gpio readall` to do 10Hz polling read.
+
+## Interesting Similar Projects
+- From: https://raspberrytips.com/play-spotify-on-raspberry-pi/#Play_Spotify_with_MusicBox
+    - https://volumio.org/
+    - https://www.pimusicbox.com/
+    - https://mopidy.com/
