@@ -2,13 +2,15 @@ image: "python:3.7"
 
 stages:
   - static_analysis
-  - test
 
 include:
   - template: Code-Quality.gitlab-ci.yml
 
 code_quality:
+  stage: static_analysis
   before_script: []
+  artifacts:
+    paths: [gl-code-quality-report.json]
 
 before_script:
   - python --version
