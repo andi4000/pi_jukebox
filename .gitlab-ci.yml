@@ -4,7 +4,7 @@ stages:
   - static_analysis
 
 include:
-  template: Jobs/Code-Quality.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
 
 before_script:
   - python --version
@@ -15,11 +15,6 @@ before_script:
   - pip install isort
   - pip install -r requirements.txt
   
-code_quality:
-  stage: static_analysis
-  artifacts:
-    paths: [gl-code-quality-report.json]
-
 flake8:
   stage: static_analysis
   script:
