@@ -4,7 +4,10 @@
 
 import threading
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except RuntimeError:
+    import Mock.GPIO as GPIO
 
 
 class ButtonHandler(threading.Thread):
@@ -16,18 +19,18 @@ class ButtonHandler(threading.Thread):
         self.pin = pin
         self.bouncetime = float(bouncetime) / 1000
 
-        self.lastpinval = GPIO.input(self.pin)
+        self.lastpinval = GPIO.input(self.pin)  # pylint: disable=E1111
         self.lock = threading.Lock()
 
     def __call__(self, *args):
         if not self.lock.acquire(blocking=False):
             return
 
-        t = threading.Timer(self.bouncetime, self.read, args=args)
-        t.start()
+        mythread = threading.Timer(self.bouncetime, self.read, args=args)
+        mythread.start()
 
     def read(self, *args):
-        pinval = GPIO.input(self.pin)
+        pinval = GPIO.input(self.pin)  # pylint: disable=E1111
 
         # fmt: off
         if (
