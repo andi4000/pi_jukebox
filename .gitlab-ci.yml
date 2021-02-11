@@ -13,6 +13,7 @@ before_script:
   - pip install pylint
   - pip install black
   - pip install isort
+  - pip install -r requirements.txt
   
 code_quality:
   stage: static_analysis
