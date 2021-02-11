@@ -8,6 +8,7 @@ import os
 import glob
 import logging
 from button_handler import ButtonHandler
+import vlc
 
 IS_DEBUG = False
 LOOP_HZ = 20
@@ -45,32 +46,32 @@ SONG_END_POSITION = 0.990  # for VLC get_position()
 SONGS_DIR = "music"
 ## Songs END
 
-logging_level = logging.INFO
-if IS_DEBUG: logging_level = logging.DEBUG
-
-logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
-        level=logging_level)
-
-logging.info("Initializing GPIO")
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-
-GPIO.setup(PIN_LEDS, GPIO.OUT)
-GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))  # Turn off all LEDs
-
-GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-logging.info("GPIO Pins initialized")
-
-logging.info("Initializing VLC")
-import vlc
-g_vlc_instance = vlc.Instance("--aout=alsa")
-g_player = g_vlc_instance.media_player_new()
-g_player.audio_set_volume(100)
-logging.info("VLC initialized")
+g_vlc_instance = None
+g_player = None
 
 g_active_song_idx = None
 g_songs = []  # to hold mp3 file paths
+
+
+def _init_gpio():
+    logging.info("Initializing GPIO")
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+
+    GPIO.setup(PIN_LEDS, GPIO.OUT)
+    GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))  # Turn off all LEDs
+
+    GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    logging.info("GPIO Pins initialized")
+
+
+def _init_music_player():
+    logging.info("Initializing VLC")
+    g_vlc_instance = vlc.Instance("--aout=alsa")
+    g_player = g_vlc_instance.media_player_new()
+    g_player.audio_set_volume(100)
+    logging.info("VLC initialized")
 
 
 def _find_songs() -> list:
@@ -195,6 +196,14 @@ def _loop_routine():
 
 
 def main():
+    logging_level = logging.INFO
+    if IS_DEBUG: logging_level = logging.DEBUG
+
+    logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
+                        level=logging_level)
+
+    _init_gpio()
+    _init_music_player()
     _init_songs_button_binding()
     logging.info("Jukebox ready")
 
