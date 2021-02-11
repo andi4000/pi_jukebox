@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import RPi.GPIO as GPIO
-from signal import pause
 from time import sleep
 import sys
 import os
@@ -13,38 +12,38 @@ import vlc
 IS_DEBUG = False
 LOOP_HZ = 20
 
-## IO Definitions BEGIN
+# IO Definitions BEGIN
 PIN_TAILSWITCH = 2
 PIN_BUTTONS = [
-        7,  # 0
-        8,  # 1
-        11, # 2
-        9,  # 3
-        10, # 4
-        15, # 5
-        14, # 6
-        3   # 7
+        7,   # 0
+        8,   # 1
+        11,  # 2
+        9,   # 3
+        10,  # 4
+        15,  # 5
+        14,  # 6
+        3    # 7
         ]
 
 DEFAULT_BOUNCE_TIME_MS = 100
 
 PIN_LEDS = [
-        17, # 0
-        18, # 1
-        27, # 2
-        22, # 3
-        23, # 4
-        24, # 5
-        25, # 6
-        4 # 7
+        17,  # 0
+        18,  # 1
+        27,  # 2
+        22,  # 3
+        23,  # 4
+        24,  # 5
+        25,  # 6
+        4    # 7
         ]
 
-## IO Definitions END
+# IO Definitions END
 
-## Songs BEGIN
+# Songs BEGIN
 SONG_END_POSITION = 0.990  # for VLC get_position()
 SONGS_DIR = "music"
-## Songs END
+# Songs END
 
 g_vlc_instance = None
 g_player = None
@@ -93,7 +92,7 @@ def _init_songs_button_binding():
 
     for i in range(len(g_songs)):
         if i >= len(PIN_BUTTONS):
-            logging.info(f"Ignoring song because no buttons left: {g_songs[i]}")
+            logging.info(f"Ignoring song because no button left: {g_songs[i]}")
             continue
 
         logging.info(f"Initializing button for {g_songs[i]}")
@@ -106,7 +105,7 @@ def _init_songs_button_binding():
                 )
 
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-                callback=button_handlers[i])
+                              callback=button_handlers[i])
 
         GPIO.output(PIN_LEDS[i], True)
         sleep(0.1)
@@ -118,7 +117,9 @@ def _play_song(song_path: str):
     g_player.stop()
     g_player.set_media(g_vlc_instance.media_new(song_path))
     g_player.play()
-    if IS_DEBUG: g_player.set_position(0.97)
+
+    if IS_DEBUG:
+        g_player.set_position(0.97)
 
 
 def _stop_playback():
@@ -197,7 +198,8 @@ def _loop_routine():
 
 def main():
     logging_level = logging.INFO
-    if IS_DEBUG: logging_level = logging.DEBUG
+    if IS_DEBUG:
+        logging_level = logging.DEBUG
 
     logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
                         level=logging_level)
@@ -215,6 +217,7 @@ def main():
             logging.info("Exiting program")
             _shutdown_routine()
             sys.exit()
+
 
 if __name__ == "__main__":
     main()
