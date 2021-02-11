@@ -17,7 +17,7 @@ code_quality:
 flake8:
   stage: static_analysis
   script:
-    - flake8 *.py
+    - python -m flake8 *.py
 
 mypy:
   stage: static_analysis
@@ -30,4 +30,4 @@ pylint:
   stage: static_analysis
   allow_failure: true
   script:
-    - pylint -d C0301 *.py
+    - python -m pylint -d C0301 *.py
