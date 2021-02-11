@@ -8,7 +8,10 @@ include:
 
 before_script:
   - python --version
-
+  - pip install flake8
+  - pip install mypy
+  - pip install pylint
+  
 code_quality:
   stage: static_analysis
   artifacts:
