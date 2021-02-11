@@ -1,10 +1,33 @@
+image: "python:3.7"
+
 stages:
-  - test
+  - static_analysis
 
 include:
   template: Jobs/Code-Quality.gitlab-ci.yml
 
+before_script:
+  - python --version
+
 code_quality:
-  stage: test
+  stage: static_analysis
   artifacts:
     paths: [gl-code-quality-report.json]
+
+flake8:
+  stage: static_analysis
+  script:
+    - flake8 *.py
+
+mypy:
+  stage: static_analysis
+  script:
+    - pwd
+    - ls -l
+    - python -m mypy *.py
+
+pylint:
+  stage: static_analysis
+  allow_failure: true
+  script:
+    - pylint -d C0301 *.py
