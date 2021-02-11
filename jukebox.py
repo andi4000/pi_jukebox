@@ -97,9 +97,12 @@ def _init_songs_button_binding():
 
         logging.info(f"Initializing button for {g_songs[i]}")
 
+        # Wrapper for button callback, workaround for buggy GPIO library
         # "falling" because of the Pull-Up (button state defaults to 1)
-        button_handlers.append(ButtonHandler(PIN_BUTTONS[i], _cb,
-            edge="falling", bouncetime=DEFAULT_BOUNCE_TIME_MS))
+        button_handlers.append(
+                ButtonHandler(PIN_BUTTONS[i], _cb_buttonpress, edge="falling",
+                              bouncetime=DEFAULT_BOUNCE_TIME_MS)
+                )
 
         GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
                 callback=button_handlers[i])
@@ -117,7 +120,11 @@ def _play_song(song_path: str):
     if IS_DEBUG: g_player.set_position(0.97)
 
 
-def _cb(channel):
+def _cb_buttonpress(channel):
+    """
+    Logic for playing song, considering the status of playback (is currently
+    playing or not)
+    """
     global g_active_song_idx
     global g_songs
 
