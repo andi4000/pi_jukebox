@@ -2,8 +2,9 @@
 # Copied from: https://raspberrypi.stackexchange.com/a/76738
 #
 
-import RPi.GPIO as GPIO
 import threading
+
+import RPi.GPIO as GPIO
 
 
 class ButtonHandler(threading.Thread):
