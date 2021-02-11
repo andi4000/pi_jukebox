@@ -45,4 +45,4 @@ black:
 isort:
   stage: static_analysis
   script:
-    - python -m isort --check-only *.py
+    - python -m isort --profile black --check-only *.py
