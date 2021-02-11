@@ -66,6 +66,8 @@ def _init_gpio():
 
 
 def _init_music_player():
+    global g_vlc_instance
+    global g_player
     logging.info("Initializing VLC")
     g_vlc_instance = vlc.Instance("--aout=alsa")
     g_player = g_vlc_instance.media_player_new()
