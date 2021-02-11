@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #
 # Copied from: https://raspberrypi.stackexchange.com/a/76738
 #
