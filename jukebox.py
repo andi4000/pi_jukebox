@@ -9,7 +9,7 @@ import logging
 from button_handler import ButtonHandler
 import vlc
 
-IS_DEBUG = False
+IS_DEBUG = True
 LOOP_HZ = 20
 
 # IO Definitions BEGIN
@@ -168,13 +168,11 @@ def _is_song_ending() -> bool:
     is_song_ending = None
     song_position = g_player.get_position()
     logging.debug(f"song position = {song_position:.4f}")
+    # value between 0.0 and 1.0
+    # -1 means playback is stopped
 
-    if -1 < song_position < SONG_END_POSITION:
-        is_song_ending = False
-    elif song_position > SONG_END_POSITION:
+    if song_position > SONG_END_POSITION:
         is_song_ending = True
-
-    assert is_song_ending is not None, "Error in determining song position"
 
     return is_song_ending
 
