@@ -13,6 +13,7 @@ IS_DEBUG = True
 LOOP_HZ = 20
 
 # IO Definitions BEGIN
+# fmt: off
 PIN_TAILSWITCH = 2
 PIN_BUTTONS = [
         7,   # 0
@@ -38,6 +39,7 @@ PIN_LEDS = [
         4    # 7
         ]
 
+# fmt: on
 # IO Definitions END
 
 # Songs BEGIN
@@ -59,7 +61,7 @@ def _init_gpio():
     GPIO.setwarnings(False)
 
     GPIO.setup(PIN_LEDS, GPIO.OUT)
-    GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))  # Turn off all LEDs
+    GPIO.output(PIN_LEDS, [False] * len(PIN_LEDS))  # Turn off all LEDs
 
     GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     logging.info("GPIO Pins initialized")
@@ -102,12 +104,15 @@ def _init_songs_button_binding():
         # Wrapper for button callback, workaround for buggy GPIO library
         # "falling" because of the Pull-Up (button state defaults to 1)
         button_handlers.append(
-                ButtonHandler(PIN_BUTTONS[i], _cb_buttonpress, edge="falling",
-                              bouncetime=DEFAULT_BOUNCE_TIME_MS)
-                )
+            ButtonHandler(
+                PIN_BUTTONS[i],
+                _cb_buttonpress,
+                edge="falling",
+                bouncetime=DEFAULT_BOUNCE_TIME_MS,
+            )
+        )
 
-        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING,
-                              callback=button_handlers[i])
+        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING, callback=button_handlers[i])
 
         GPIO.output(PIN_LEDS[i], True)
         sleep(0.1)
@@ -160,7 +165,7 @@ def _cb_buttonpress(channel):
 
 def _shutdown_routine():
     logging.debug("Turning off LEDS and shutting down")
-    GPIO.output(PIN_LEDS, [False]*len(PIN_LEDS))
+    GPIO.output(PIN_LEDS, [False] * len(PIN_LEDS))
     GPIO.cleanup()
 
 
@@ -184,7 +189,7 @@ def _loop_routine():
     """
     global g_active_song_idx
 
-    led_states = [False]*len(PIN_LEDS)
+    led_states = [False] * len(PIN_LEDS)
 
     if g_active_song_idx is not None:
         if _is_song_ending():
@@ -201,8 +206,9 @@ def main():
     if IS_DEBUG:
         logging_level = logging.DEBUG
 
-    logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s",
-                        level=logging_level)
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s %(message)s", level=logging_level
+    )
 
     _init_gpio()
     _init_music_player()
@@ -212,7 +218,7 @@ def main():
     while True:
         try:
             _loop_routine()
-            sleep(1.0/float(LOOP_HZ))
+            sleep(1.0 / float(LOOP_HZ))
         except KeyboardInterrupt:
             logging.info("Exiting program")
             _shutdown_routine()
