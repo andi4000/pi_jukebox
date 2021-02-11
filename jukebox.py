@@ -6,7 +6,12 @@ import os
 import sys
 from time import sleep
 
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except:
+    import Mock.GPIO as GPIO
+
+
 import vlc
 
 from button_handler import ButtonHandler

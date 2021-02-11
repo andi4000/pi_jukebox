@@ -1,1 +1,2 @@
 RPi.GPIO~=0.7.0
+Mock.GPIO~=0.1
