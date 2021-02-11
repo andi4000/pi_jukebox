@@ -183,7 +183,7 @@ def _shutdown_routine():
 
 
 def _is_song_ending() -> bool:
-    is_song_ending = None
+    is_song_ending = False
     song_position = g_player.get_position()
     logging.debug(f"song position = {song_position:.4f}")
     # value between 0.0 and 1.0
