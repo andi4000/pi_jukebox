@@ -148,19 +148,36 @@ def _shutdown_routine():
     GPIO.cleanup()
 
 
+def _is_song_ending() -> bool:
+    is_song_ending = None
+    song_position = g_player.get_position()
+    logging.debug(f"song position = {song_position:.4f}")
+
+    if -1 < song_position < SONG_END_POSITION:
+        is_song_ending = False
+    elif song_position > SONG_END_POSITION:
+        is_song_ending = True
+
+    assert is_song_ending is not None, "Error in determining song position"
+
+    return is_song_ending
+
+
 def _loop_routine():
+    """
+    Routine for each loop, sets LED status based on playback status (playing or
+    ends)
+    """
     global g_active_song_idx
 
     led_states = [False]*len(PIN_LEDS)
 
     if g_active_song_idx is not None:
-        song_position = g_player.get_position()
-        logging.debug(f"song position = {song_position:.4f}")
-        if -1 < song_position < SONG_END_POSITION:
-            led_states[g_active_song_idx] = True
-        elif song_position > SONG_END_POSITION:
+        if _is_song_ending():
             logging.info("Song reaches end")
             g_active_song_idx = None
+        else:
+            led_states[g_active_song_idx] = True
 
     GPIO.output(PIN_LEDS, led_states)
 
