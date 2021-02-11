@@ -12,6 +12,7 @@ before_script:
   - pip install mypy
   - pip install pylint
   - pip install black
+  - pip install isort
   
 code_quality:
   stage: static_analysis
@@ -40,3 +41,8 @@ black:
   stage: static_analysis
   script:
     - python -m black --check *.py
+
+isort:
+  stage: static_analysis
+  script:
+    - python -m isort --check-only *.py
