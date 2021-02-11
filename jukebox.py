@@ -120,6 +120,11 @@ def _play_song(song_path: str):
     if IS_DEBUG: g_player.set_position(0.97)
 
 
+def _stop_playback():
+    """wrapper for vlc.stop()"""
+    g_player.stop()
+
+
 def _cb_buttonpress(channel):
     """
     Logic for playing song, considering the status of playback (is currently
@@ -141,8 +146,8 @@ def _cb_buttonpress(channel):
     elif g_active_song_idx is idx:
         if g_player.is_playing():
             logging.info("Stopping active playback")
-            g_player.stop()
             g_active_song_idx = None
+            _stop_playback()
     else:
         logging.info(f"Stopping playback and playing new song #{idx}")
         g_active_song_idx = idx
