@@ -1,3 +1,10 @@
-# This file is a template, and might need editing before it works on your project.
+stages:
+  - test
+
 include:
   template: Jobs/Code-Quality.gitlab-ci.yml
+
+code_quality:
+  stage: test
+  artifacts:
+    paths: [gl-code-quality-report.json]
