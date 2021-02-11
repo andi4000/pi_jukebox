@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""
+Raspberry Pi Jukebox
+"""
 
 import glob
 import logging
@@ -8,7 +11,7 @@ from time import sleep
 
 try:
     import RPi.GPIO as GPIO
-except:
+except RuntimeError:
     import Mock.GPIO as GPIO
 
 
@@ -119,7 +122,10 @@ def _init_songs_button_binding():
             )
         )
 
-        GPIO.add_event_detect(PIN_BUTTONS[i], GPIO.RISING, callback=button_handlers[i])
+        # bouncetime here is buggy, therefore extra callback wrapper ButtonHandler
+        GPIO.add_event_detect(
+            PIN_BUTTONS[i], GPIO.RISING, callback=button_handlers[i], bouncetime=10
+        )
 
         GPIO.output(PIN_LEDS[i], True)
         sleep(0.1)
