@@ -11,6 +11,7 @@ before_script:
   - pip install flake8
   - pip install mypy
   - pip install pylint
+  - pip install black
   
 code_quality:
   stage: static_analysis
@@ -34,3 +35,8 @@ pylint:
   allow_failure: true
   script:
     - python -m pylint -d C0301 *.py
+
+black:
+  stage: static_analysis
+  script:
+    - python -m black --check *.py
