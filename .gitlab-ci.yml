@@ -22,7 +22,7 @@ code_quality:
 flake8:
   stage: static_analysis
   script:
-    - python -m flake8 *.py
+    - python -m flake8 --max-line-length 88 *.py
 
 mypy:
   stage: static_analysis
