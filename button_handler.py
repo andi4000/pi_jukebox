@@ -5,9 +5,9 @@
 import threading
 
 try:
-    import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO  # type: ignore
 except RuntimeError:
-    import Mock.GPIO as GPIO
+    import Mock.GPIO as GPIO  # type: ignore
 
 
 class ButtonHandler(threading.Thread):

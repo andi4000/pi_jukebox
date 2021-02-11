@@ -8,14 +8,14 @@ import logging
 import os
 import sys
 from time import sleep
+from typing import Union
 
 try:
-    import RPi.GPIO as GPIO
+    import RPi.GPIO as GPIO  # type: ignore
 except RuntimeError:
-    import Mock.GPIO as GPIO
+    import Mock.GPIO as GPIO  # type: ignore
 
-
-import vlc
+import vlc  # type: ignore
 
 from button_handler import ButtonHandler
 
@@ -57,10 +57,10 @@ SONG_END_POSITION = 0.990  # for VLC get_position()
 SONGS_DIR = "music"
 # Songs END
 
-g_vlc_instance = None
-g_player = None
+g_vlc_instance = None  # type: vlc.Instance
+g_player = None  # type: vlc.MediaPlayer
 
-g_active_song_idx = None
+g_active_song_idx = None  # type: Union[None, int]
 g_songs = []  # to hold mp3 file paths
 
 
