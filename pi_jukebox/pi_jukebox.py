@@ -201,7 +201,7 @@ def _is_song_ending(song_end_position: float) -> bool:
     return is_song_ending
 
 
-def _loop_routine(config: configfile.ConfigParser):
+def _loop_routine(config: configparser.ConfigParser):
     """
     Routine for each loop, sets LED status based on playback status (playing or
     ends)
