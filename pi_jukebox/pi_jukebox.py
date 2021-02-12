@@ -246,6 +246,7 @@ def _create_initial_config_file(str_config_file: str):
     config = configparser.ConfigParser()
     config["default"] = {}
     config["default"]["music_folder"] = str_music_folder
+    config["player"] = {}
     config["player"]["song_end_position"] = DEFAULT_SONG_END_POSITION
 
     os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
