@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from pi_jukebox import pi_jukebox
+from . import pi_jukebox
 
 if __name__ == "__main__":
     pi_jukebox.main()

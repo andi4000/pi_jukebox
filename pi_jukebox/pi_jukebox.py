@@ -236,7 +236,3 @@ def main():
             logging.info("Exiting program")
             _shutdown_routine()
             sys.exit()
-
-
-if __name__ == "__main__":
-    main()
