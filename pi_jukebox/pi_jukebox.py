@@ -102,9 +102,13 @@ def _find_songs(music_folder: str) -> list:
     return found_files
 
 
-def _init_songs_button_binding(music_folder: str):
+def _init_songs_button_binding(config: configparser.ConfigParser):
     global g_songs
     logging.info("Initializing songs")
+
+    music_folder = config["default"]["music_folder"]
+    btn_bouncetime = config["GPIO"].getint("bounce_time_ms")
+
     g_songs = _find_songs(music_folder)
 
     # TODO: figure out if lifecycle of this could cause problem
@@ -124,7 +128,7 @@ def _init_songs_button_binding(music_folder: str):
                 PIN_BUTTONS[i],
                 _cb_buttonpress,
                 edge="falling",
-                bouncetime=DEFAULT_BOUNCE_TIME_MS,
+                bouncetime=btn_bouncetime,
             )
         )
 
@@ -247,8 +251,12 @@ def _create_initial_config_file(str_config_file: str):
     config = configparser.ConfigParser()
     config["default"] = {}
     config["default"]["music_folder"] = str_music_folder
+
     config["player"] = {}
     config["player"]["song_end_position"] = str(DEFAULT_SONG_END_POSITION)
+
+    config["GPIO"] = {}
+    config["GPIO"]["bounce_time_ms"] = str(DEFAULT_BOUNCE_TIME_MS)
 
     os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
 
@@ -291,7 +299,7 @@ def main():
 
     _init_gpio()
     _init_music_player()
-    _init_songs_button_binding(music_folder)
+    _init_songs_button_binding(config)
     logging.info("Jukebox ready")
 
     while True:
