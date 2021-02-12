@@ -2,6 +2,8 @@
 
 Simple jukebox with Raspberry Pi. Songs will be played when buttons are pressed.
 
+**DISCLAIMER**: This is a home project, code is shit.
+
 ## Requirements
 - `sudo apt install gpiozero python3-vlc vlc-bin vlc-plugin-base python3-rpi.gpio`
 - ALSA volume defaults to 50%, crank it up with `alsamixer`. This is persistent.
