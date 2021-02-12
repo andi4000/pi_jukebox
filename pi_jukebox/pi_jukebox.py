@@ -282,7 +282,7 @@ def main():
     if os.path.isdir(music_folder):
         logging.info(f"Music folder found: {music_folder}")
     else:
-        logging.info(f"Creating music folder: {music_folder}")
+        logging.info(f"Music folder nonexistent, creating: {music_folder}")
         os.makedirs(music_folder)
 
     _init_gpio()
