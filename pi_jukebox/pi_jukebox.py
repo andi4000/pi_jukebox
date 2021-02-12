@@ -17,7 +17,7 @@ except RuntimeError:
 
 import vlc  # type: ignore
 
-from button_handler import ButtonHandler
+from .button_handler import ButtonHandler
 
 IS_DEBUG = True
 LOOP_HZ = 20
