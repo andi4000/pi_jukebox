@@ -3,12 +3,15 @@
 Raspberry Pi Jukebox
 """
 
+import configparser
 import glob
 import logging
 import os
 import sys
 from time import sleep
 from typing import Union
+
+from appdirs import AppDirs  # type: ignore
 
 try:
     import RPi.GPIO as GPIO  # type: ignore
@@ -218,6 +221,39 @@ def _loop_routine():
     GPIO.output(PIN_LEDS, led_states)
 
 
+def _get_default_config_file() -> str:
+    str_config_file = ""
+
+    app_name = __name__.split(".")[0]
+    dirs = AppDirs(appname=app_name)
+
+    # On Linux: $HOME/.config/pi_jukebox/pi_jukebox.conf
+    str_config_file = dirs.user_config_dir + "/pi_jukebox.conf"
+
+    return str_config_file
+
+
+def _create_initial_config_file(str_config_file: str):
+    """
+    Create initial config file with only one field: music_folder
+    Defaults to $HOME/pi_jukebox
+    """
+    logging.info("Creating initial config file..")
+
+    str_music_folder = os.path.expanduser("~") + "/pi_jukebox"
+
+    config = configparser.ConfigParser()
+    config["default"] = {}
+    config["default"]["music_folder"] = str_music_folder
+
+    os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
+
+    with open(str_config_file, "w") as file_obj:
+        config.write(file_obj)
+
+    logging.info(f"Config file created: {str_config_file}")
+
+
 def main():
     logging_level = logging.INFO
     if IS_DEBUG:
@@ -227,7 +263,27 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s", level=logging_level
     )
 
-    music_folder = "/home/pi/pi_jukebox"
+    config_file = _get_default_config_file()
+
+    if os.path.isfile(config_file):
+        logging.info(f"Config file found: {config_file}")
+    else:
+        _create_initial_config_file(config_file)
+
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    if not config.has_option("default", "music_folder"):
+        logging.error("Invalid config file! Remove config file and let me recreate it.")
+        sys.exit(-1)
+
+    music_folder = config["default"]["music_folder"]
+
+    if os.path.isdir(music_folder):
+        logging.info(f"Music folder found: {music_folder}")
+    else:
+        logging.info(f"Creating music folder: {music_folder}")
+        os.makedirs(music_folder)
 
     _init_gpio()
     _init_music_player()
