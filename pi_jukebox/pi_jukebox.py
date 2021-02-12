@@ -210,7 +210,8 @@ def _loop_routine(config: configparser.ConfigParser):
 
     led_states = [False] * len(PIN_LEDS)
 
-    song_end_position = config["player"]["song_end_position"]
+    song_end_position = config["player"].getfloat("song_end_position")
+    assert abs(song_end_position - DEFAULT_SONG_END_POSITION) < 0.01
 
     if g_active_song_idx is not None:
         if _is_song_ending(song_end_position):
@@ -247,7 +248,7 @@ def _create_initial_config_file(str_config_file: str):
     config["default"] = {}
     config["default"]["music_folder"] = str_music_folder
     config["player"] = {}
-    config["player"]["song_end_position"] = DEFAULT_SONG_END_POSITION
+    config["player"]["song_end_position"] = str(DEFAULT_SONG_END_POSITION)
 
     os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
 
