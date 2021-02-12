@@ -55,10 +55,7 @@ PIN_LEDS = [
 # fmt: on
 # IO Definitions END
 
-# Songs BEGIN
-SONG_END_POSITION = 0.990  # for VLC get_position()
-SONGS_DIR = "music"
-# Songs END
+DEFAULT_SONG_END_POSITION = 0.990  # for VLC get_position()
 
 g_vlc_instance = None  # type: vlc.Instance
 g_player = None  # type: vlc.MediaPlayer
@@ -189,20 +186,20 @@ def _shutdown_routine():
     GPIO.cleanup()
 
 
-def _is_song_ending() -> bool:
+def _is_song_ending(song_end_position: float) -> bool:
     is_song_ending = False
     song_position = g_player.get_position()
     logging.debug(f"song position = {song_position:.4f}")
     # value between 0.0 and 1.0
     # -1 means playback is stopped
 
-    if song_position > SONG_END_POSITION:
+    if song_position > song_end_position:
         is_song_ending = True
 
     return is_song_ending
 
 
-def _loop_routine():
+def _loop_routine(config: configfile.ConfigParser):
     """
     Routine for each loop, sets LED status based on playback status (playing or
     ends)
@@ -211,8 +208,10 @@ def _loop_routine():
 
     led_states = [False] * len(PIN_LEDS)
 
+    song_end_position = config["player"]["song_end_position"]
+
     if g_active_song_idx is not None:
-        if _is_song_ending():
+        if _is_song_ending(song_end_position):
             logging.info("Song reaches end")
             g_active_song_idx = None
         else:
@@ -245,6 +244,7 @@ def _create_initial_config_file(str_config_file: str):
     config = configparser.ConfigParser()
     config["default"] = {}
     config["default"]["music_folder"] = str_music_folder
+    config["player"]["song_end_position"] = DEFAULT_SONG_END_POSITION
 
     os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
 
@@ -292,7 +292,7 @@ def main():
 
     while True:
         try:
-            _loop_routine()
+            _loop_routine(config)
             sleep(1.0 / float(LOOP_HZ))
         except KeyboardInterrupt:
             logging.info("Exiting program")
