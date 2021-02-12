@@ -56,6 +56,8 @@ PIN_LEDS = [
 # IO Definitions END
 
 DEFAULT_SONG_END_POSITION = 0.990  # for VLC get_position()
+DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
+DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
 
 g_vlc_instance = None  # type: vlc.Instance
 g_player = None  # type: vlc.MediaPlayer
@@ -227,7 +229,7 @@ def _get_default_config_file() -> str:
     dirs = AppDirs(appname=app_name)
 
     # On Linux: $HOME/.config/pi_jukebox/pi_jukebox.conf
-    str_config_file = dirs.user_config_dir + "/pi_jukebox.conf"
+    str_config_file = dirs.user_config_dir + "/" + DEFAULT_CONFIG_FILENAME
 
     return str_config_file
 
@@ -239,7 +241,7 @@ def _create_initial_config_file(str_config_file: str):
     """
     logging.info("Creating initial config file..")
 
-    str_music_folder = os.path.expanduser("~") + "/pi_jukebox"
+    str_music_folder = os.path.expanduser("~") + "/" + DEFAULT_MUSIC_FOLDER_NAME
 
     config = configparser.ConfigParser()
     config["default"] = {}
