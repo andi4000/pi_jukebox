@@ -87,19 +87,23 @@ def _init_music_player():
     logging.info("VLC initialized")
 
 
-def _find_songs() -> list:
-    pwd = os.path.dirname(os.path.realpath(__file__))
-    found_files = glob.glob(f"{pwd}/{SONGS_DIR}/*.mp3")
+def _find_songs(music_folder: str) -> list:
+    if not os.path.isdir(music_folder):
+        raise FileNotFoundError(f"Music folder does not exists: {music_folder}")
+
+    # TODO: add support for other audio files
+    found_files = glob.glob(f"{music_folder}/*.mp3")
+
     logging.info(f"Found {len(found_files)} songs")
     logging.debug(f"found following files: {found_files}")
     found_files.sort()
     return found_files
 
 
-def _init_songs_button_binding():
+def _init_songs_button_binding(music_folder: str):
     global g_songs
     logging.info("Initializing songs")
-    g_songs = _find_songs()
+    g_songs = _find_songs(music_folder)
 
     # TODO: figure out if lifecycle of this could cause problem
     button_handlers = []
@@ -223,9 +227,11 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s", level=logging_level
     )
 
+    music_folder = "/home/pi/pi_jukebox"
+
     _init_gpio()
     _init_music_player()
-    _init_songs_button_binding()
+    _init_songs_button_binding(music_folder)
     logging.info("Jukebox ready")
 
     while True:
