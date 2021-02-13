@@ -199,6 +199,8 @@ def _shutdown_routine():
 
 
 def _is_song_ending(song_end_position: float) -> bool:
+    assert song_end_position > 0.0
+
     is_song_ending = False
     song_position = g_player.get_position()
     logging.debug(f"song position = {song_position:.4f}")
