@@ -8,11 +8,11 @@ import glob
 import json
 import logging
 import os
-import pkg_resources
 import sys
 from time import sleep
 from typing import Union
 
+import pkg_resources
 from appdirs import AppDirs  # type: ignore
 
 try:
