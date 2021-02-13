@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 from time import sleep
-from typing import Union
+from typing import List, Union
 
 import pkg_resources
 from appdirs import AppDirs  # type: ignore
@@ -29,11 +29,11 @@ LOOP_HZ = 20
 
 # IO Definitions
 PIN_TAILSWITCH = -1
-PIN_BUTTONS = []
-PIN_LEDS = []
+PIN_BUTTONS = []  # type: List[int]
+PIN_LEDS = []  # type: List[int]
 BTN_BOUNCE_TIME_MS = -1
 
-DEFAULT_SONG_END_POSITION = 0.990  # for VLC get_position()
+SONG_END_POSITION = -1.0  # for VLC get_position()
 DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
 DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
 
