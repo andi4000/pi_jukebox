@@ -244,14 +244,24 @@ def _create_initial_config_file(str_config_file: str):
     logging.info(f"Config file created: {str_config_file}")
 
 
+def _init_music_folder(config: configparser.ConfigParser):
+    if not config.has_option("default", "music_folder"):
+        logging.error("Invalid config file! Remove config file and let me recreate it.")
+        sys.exit(-1)
 def _load_GPIO_config(config: configparser.ConfigParser):
     global PIN_BUTTONS
     global PIN_LEDS
     global PIN_TAILSWITCH
     global BTN_BOUNCE_TIME_MS
 
+    music_folder = config["default"]["music_folder"]
     assert "GPIO" in config
 
+    if os.path.isdir(music_folder):
+        logging.info(f"Music folder found: {music_folder}")
+    else:
+        logging.info(f"Music folder nonexistent, creating: {music_folder}")
+        os.makedirs(music_folder)
     PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
     PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
     PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
@@ -277,17 +287,8 @@ def main():
     config = configparser.ConfigParser()
     config.read(config_file)
 
-    if not config.has_option("default", "music_folder"):
-        logging.error("Invalid config file! Remove config file and let me recreate it.")
-        sys.exit(-1)
-
-    music_folder = config["default"]["music_folder"]
-
-    if os.path.isdir(music_folder):
-        logging.info(f"Music folder found: {music_folder}")
-    else:
-        logging.info(f"Music folder nonexistent, creating: {music_folder}")
-        os.makedirs(music_folder)
+    _init_music_folder(config)
+    _init_gpio(config)
 
     _load_GPIO_config(config)
     _init_gpio()
