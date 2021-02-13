@@ -7,6 +7,7 @@ import configparser
 import glob
 import logging
 import os
+import pkg_resources
 import sys
 from time import sleep
 from typing import Union
@@ -246,7 +247,7 @@ def _create_initial_config_file(str_config_file: str):
     """
     logging.info("Creating initial config file..")
 
-    default_config_file = pkg_resources.resource_string(__name__, "config/default.conf")
+    default_config_file = pkg_resources.resource_filename(__name__, "config/default.conf")
 
     config = configparser.ConfigParser()
 
