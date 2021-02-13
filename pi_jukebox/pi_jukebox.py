@@ -220,7 +220,9 @@ def _create_initial_config_file(str_config_file: str):
     """
     logging.info("Creating initial config file..")
 
-    default_config_file = pkg_resources.resource_filename(__name__, "config/default.conf")
+    default_config_file = pkg_resources.resource_filename(
+        __name__, "config/default.conf"
+    )
 
     config = configparser.ConfigParser()
 
