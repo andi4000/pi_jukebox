@@ -182,7 +182,7 @@ def _is_song_ending(song_end_position: float) -> bool:
     return is_song_ending
 
 
-def _loop_routine(config: configparser.ConfigParser):
+def _loop_routine():
     """
     Routine for each loop, sets LED status based on playback status (playing or
     ends)
@@ -191,11 +191,8 @@ def _loop_routine(config: configparser.ConfigParser):
 
     led_states = [False] * len(PIN_LEDS)
 
-    song_end_position = config["player"].getfloat("song_end_position")
-    assert abs(song_end_position - DEFAULT_SONG_END_POSITION) < 0.01
-
     if g_active_song_idx is not None:
-        if _is_song_ending(song_end_position):
+        if _is_song_ending(SONG_ENDING_POSITION):
             logging.info("Song reaches end")
             g_active_song_idx = None
         else:
@@ -298,7 +295,7 @@ def main():
 
     while True:
         try:
-            _loop_routine(config)
+            _loop_routine()
             sleep(1.0 / float(LOOP_HZ))
         except KeyboardInterrupt:
             logging.info("Exiting program")
