@@ -44,8 +44,10 @@ g_active_song_idx = None  # type: Union[None, int]
 g_songs = []  # to hold mp3 file paths
 
 
-def _init_gpio():
+def _init_gpio(config: configparser.ConfigParser):
     logging.info("Initializing GPIO")
+
+    _load_GPIO_config(config)
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -57,14 +59,41 @@ def _init_gpio():
     logging.info("GPIO Pins initialized")
 
 
-def _init_music_player():
+def _init_music_player(config: configparser.ConfigParser):
     global g_vlc_instance
     global g_player
+
+    _load_player_config(config)
+
     logging.info("Initializing VLC")
     g_vlc_instance = vlc.Instance("--aout=alsa")
     g_player = g_vlc_instance.media_player_new()
     g_player.audio_set_volume(100)
     logging.info("VLC initialized")
+
+
+def _load_GPIO_config(config: configparser.ConfigParser):
+    global PIN_BUTTONS
+    global PIN_LEDS
+    global PIN_TAILSWITCH
+    global BTN_BOUNCE_TIME_MS
+
+    assert "GPIO" in config
+
+    PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
+    PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
+    PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
+    BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
+
+    logging.debug("GPIO configurations:")
+    logging.debug(f"PIN_BUTTONS: {PIN_BUTTONS}")
+    logging.debug(f"PIN_LEDS: {PIN_LEDS}")
+
+
+def _load_player_config(config: configparser.ConfigParser):
+    global SONG_END_POSITION
+    assert "player" in config
+    SONG_END_POSITION = config["player"].getfloat("song_end_position")
 
 
 def _find_songs(music_folder: str) -> list:
@@ -248,24 +277,14 @@ def _init_music_folder(config: configparser.ConfigParser):
     if not config.has_option("default", "music_folder"):
         logging.error("Invalid config file! Remove config file and let me recreate it.")
         sys.exit(-1)
-def _load_GPIO_config(config: configparser.ConfigParser):
-    global PIN_BUTTONS
-    global PIN_LEDS
-    global PIN_TAILSWITCH
-    global BTN_BOUNCE_TIME_MS
 
     music_folder = config["default"]["music_folder"]
-    assert "GPIO" in config
 
     if os.path.isdir(music_folder):
         logging.info(f"Music folder found: {music_folder}")
     else:
         logging.info(f"Music folder nonexistent, creating: {music_folder}")
         os.makedirs(music_folder)
-    PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
-    PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
-    PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
-    BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
 
 
 def main():
@@ -289,10 +308,7 @@ def main():
 
     _init_music_folder(config)
     _init_gpio(config)
-
-    _load_GPIO_config(config)
-    _init_gpio()
-    _init_music_player()
+    _init_music_player(config)
     _init_songs_button_binding(config)
     logging.info("Jukebox ready")
 
