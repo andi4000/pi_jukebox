@@ -223,7 +223,7 @@ def _loop_routine():
     led_states = [False] * len(PIN_LEDS)
 
     if g_active_song_idx is not None:
-        if _is_song_ending(SONG_ENDING_POSITION):
+        if _is_song_ending(SONG_END_POSITION):
             logging.info("Song reaches end")
             g_active_song_idx = None
         else:
