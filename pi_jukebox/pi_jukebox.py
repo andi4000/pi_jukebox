@@ -246,17 +246,19 @@ def _create_initial_config_file(str_config_file: str):
     """
     logging.info("Creating initial config file..")
 
-    str_music_folder = os.path.expanduser("~") + "/" + DEFAULT_MUSIC_FOLDER_NAME
+    default_config_file = pkg_resources.resource_string(__name__, "config/default.conf")
 
     config = configparser.ConfigParser()
+
+    config.read(default_config_file)
+    assert "default" in config
+    assert "player" in config
+    assert "GPIO" in config
+
+    str_music_folder = os.path.expanduser("~") + "/" + DEFAULT_MUSIC_FOLDER_NAME
+
     config["default"] = {}
     config["default"]["music_folder"] = str_music_folder
-
-    config["player"] = {}
-    config["player"]["song_end_position"] = str(DEFAULT_SONG_END_POSITION)
-
-    config["GPIO"] = {}
-    config["GPIO"]["bounce_time_ms"] = str(DEFAULT_BOUNCE_TIME_MS)
 
     os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
 
