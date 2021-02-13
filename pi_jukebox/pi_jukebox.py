@@ -5,6 +5,7 @@ Raspberry Pi Jukebox
 
 import configparser
 import glob
+import json
 import logging
 import os
 import pkg_resources
@@ -26,35 +27,11 @@ from .button_handler import ButtonHandler
 IS_DEBUG = True
 LOOP_HZ = 20
 
-# IO Definitions BEGIN
-# fmt: off
-PIN_TAILSWITCH = 2
-PIN_BUTTONS = [
-        7,   # 0
-        8,   # 1
-        11,  # 2
-        9,   # 3
-        10,  # 4
-        15,  # 5
-        14,  # 6
-        3    # 7
-        ]
-
-DEFAULT_BOUNCE_TIME_MS = 100
-
-PIN_LEDS = [
-        17,  # 0
-        18,  # 1
-        27,  # 2
-        22,  # 3
-        23,  # 4
-        24,  # 5
-        25,  # 6
-        4    # 7
-        ]
-
-# fmt: on
-# IO Definitions END
+# IO Definitions
+PIN_TAILSWITCH = -1
+PIN_BUTTONS = []
+PIN_LEDS = []
+BTN_BOUNCE_TIME_MS = -1
 
 DEFAULT_SONG_END_POSITION = 0.990  # for VLC get_position()
 DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
@@ -108,7 +85,6 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
     logging.info("Initializing songs")
 
     music_folder = config["default"]["music_folder"]
-    btn_bouncetime = config["GPIO"].getint("bounce_time_ms")
 
     g_songs = _find_songs(music_folder)
 
@@ -129,7 +105,7 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
                 PIN_BUTTONS[i],
                 _cb_buttonpress,
                 edge="falling",
-                bouncetime=btn_bouncetime,
+                bouncetime=BTN_BOUNCE_TIME_MS,
             )
         )
 
@@ -269,6 +245,20 @@ def _create_initial_config_file(str_config_file: str):
     logging.info(f"Config file created: {str_config_file}")
 
 
+def _load_GPIO_config(config: configparser.ConfigParser):
+    global PIN_BUTTONS
+    global PIN_LEDS
+    global PIN_TAILSWITCH
+    global BTN_BOUNCE_TIME_MS
+
+    assert "GPIO" in config
+
+    PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
+    PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
+    PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
+    BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
+
+
 def main():
     logging_level = logging.INFO
     if IS_DEBUG:
@@ -300,6 +290,7 @@ def main():
         logging.info(f"Music folder nonexistent, creating: {music_folder}")
         os.makedirs(music_folder)
 
+    _load_GPIO_config(config)
     _init_gpio()
     _init_music_player()
     _init_songs_button_binding(config)
