@@ -37,11 +37,11 @@ SONG_END_POSITION = -1.0  # for VLC get_position()
 DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
 DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
 
-g_vlc_instance = None  # type: vlc.Instance
-g_player = None  # type: vlc.MediaPlayer
+_g_vlc_instance = None  # type: vlc.Instance
+_g_player = None  # type: vlc.MediaPlayer
 
-g_active_song_idx = None  # type: Union[None, int]
-g_songs = []  # to hold mp3 file paths
+_g_active_song_idx = None  # type: Union[None, int]
+_g_songs = []  # to hold mp3 file paths
 
 
 def _init_gpio(config: configparser.ConfigParser):
@@ -60,15 +60,15 @@ def _init_gpio(config: configparser.ConfigParser):
 
 
 def _init_music_player(config: configparser.ConfigParser):
-    global g_vlc_instance
-    global g_player
+    global _g_vlc_instance
+    global _g_player
 
     _load_player_config(config)
 
     logging.info("Initializing VLC")
-    g_vlc_instance = vlc.Instance("--aout=alsa")
-    g_player = g_vlc_instance.media_player_new()
-    g_player.audio_set_volume(100)
+    _g_vlc_instance = vlc.Instance("--aout=alsa")
+    _g_player = _g_vlc_instance.media_player_new()
+    _g_player.audio_set_volume(100)
     logging.info("VLC initialized")
 
 
@@ -110,22 +110,22 @@ def _find_songs(music_folder: str) -> list:
 
 
 def _init_songs_button_binding(config: configparser.ConfigParser):
-    global g_songs
+    global _g_songs
     logging.info("Initializing songs")
 
     music_folder = config["default"]["music_folder"]
 
-    g_songs = _find_songs(music_folder)
+    _g_songs = _find_songs(music_folder)
 
     # TODO: figure out if lifecycle of this could cause problem
     button_handlers = []
 
-    for i in range(len(g_songs)):
+    for i in range(len(_g_songs)):
         if i >= len(PIN_BUTTONS):
-            logging.info(f"Ignoring song because no button left: {g_songs[i]}")
+            logging.info(f"Ignoring song because no button left: {_g_songs[i]}")
             continue
 
-        logging.info(f"Initializing button for {g_songs[i]}")
+        logging.info(f"Initializing button for {_g_songs[i]}")
 
         # Wrapper for button callback, workaround for buggy GPIO library
         # "falling" because of the Pull-Up (button state defaults to 1)
@@ -150,17 +150,17 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
 
 def _play_song(song_path: str):
     logging.info(f"playing media: {song_path}")
-    g_player.stop()
-    g_player.set_media(g_vlc_instance.media_new(song_path))
-    g_player.play()
+    _g_player.stop()
+    _g_player.set_media(_g_vlc_instance.media_new(song_path))
+    _g_player.play()
 
     if IS_DEBUG:
-        g_player.set_position(0.97)
+        _g_player.set_position(0.97)
 
 
 def _stop_playback():
     """wrapper for vlc.stop()"""
-    g_player.stop()
+    _g_player.stop()
 
 
 def _cb_buttonpress(channel):
@@ -168,27 +168,27 @@ def _cb_buttonpress(channel):
     Logic for playing song, considering the status of playback (is currently
     playing or not)
     """
-    global g_active_song_idx
-    global g_songs
+    global _g_active_song_idx
+    global _g_songs
 
     idx = PIN_BUTTONS.index(channel)
     logging.debug(f"button press {idx}")
 
-    assert idx < len(g_songs), f"song index non-existent: {idx}"
-    song_path = g_songs[idx]
+    assert idx < len(_g_songs), f"song index non-existent: {idx}"
+    song_path = _g_songs[idx]
 
-    if g_active_song_idx is None:
+    if _g_active_song_idx is None:
         logging.info(f"Playing new song #{idx}")
-        g_active_song_idx = idx
+        _g_active_song_idx = idx
         _play_song(song_path)
-    elif g_active_song_idx is idx:
-        if g_player.is_playing():
+    elif _g_active_song_idx is idx:
+        if _g_player.is_playing():
             logging.info("Stopping active playback")
-            g_active_song_idx = None
+            _g_active_song_idx = None
             _stop_playback()
     else:
         logging.info(f"Stopping playback and playing new song #{idx}")
-        g_active_song_idx = idx
+        _g_active_song_idx = idx
         _play_song(song_path)
 
 
@@ -202,7 +202,7 @@ def _is_song_ending(song_end_position: float) -> bool:
     assert song_end_position > 0.0
 
     is_song_ending = False
-    song_position = g_player.get_position()
+    song_position = _g_player.get_position()
     logging.debug(f"song position = {song_position:.4f}")
     # value between 0.0 and 1.0
     # -1 means playback is stopped
@@ -218,16 +218,16 @@ def _loop_routine():
     Routine for each loop, sets LED status based on playback status (playing or
     ends)
     """
-    global g_active_song_idx
+    global _g_active_song_idx
 
     led_states = [False] * len(PIN_LEDS)
 
-    if g_active_song_idx is not None:
+    if _g_active_song_idx is not None:
         if _is_song_ending(SONG_END_POSITION):
             logging.info("Song reaches end")
-            g_active_song_idx = None
+            _g_active_song_idx = None
         else:
-            led_states[g_active_song_idx] = True
+            led_states[_g_active_song_idx] = True
 
     GPIO.output(PIN_LEDS, led_states)
 
