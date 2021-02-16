@@ -24,7 +24,7 @@ import vlc  # type: ignore
 
 from .button_handler import ButtonHandler
 
-IS_DEBUG = True
+IS_DEBUG = False
 LOOP_HZ = 20
 
 # IO Definitions
