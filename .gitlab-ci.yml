@@ -24,27 +24,27 @@ before_script:
 flake8:
   stage: static_analysis
   script:
-    - python -m flake8 --max-line-length 88 *.py
+    - python -m flake8 --max-line-length 88 pi_jukebox/*.py
 
 mypy:
   stage: static_analysis
   script:
     - pwd
     - ls -l
-    - python -m mypy *.py
+    - python -m mypy pi_jukebox/*.py
 
 pylint:
   stage: static_analysis
   allow_failure: true
   script:
-    - python -m pylint -d C0301 *.py
+    - python -m pylint -d C0301 pi_jukebox/*.py
 
 black:
   stage: static_analysis
   script:
-    - python -m black --check *.py
+    - python -m black --check pi_jukebox/*.py
 
 isort:
   stage: static_analysis
   script:
-    - python -m isort --profile black --check-only *.py
+    - python -m isort --profile black --check-only pi_jukebox/*.py
