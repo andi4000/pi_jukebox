@@ -29,14 +29,23 @@ This is a home project, code is shit.
 
 TODO: show my setup
 
+## Installation
+```bash
+pip3 install git+ssh://git@gitlab.com/bagong/pi_jukebox#egg=pi_jukebox
+```
+
 ## Usage
-- clone repo
-- add `mp3` files into `music` folder
-- start the script: `python3 jukebox.py`
+- Put mp3 files into to default location: `$HOME/pi_jukebox/`
+- Music location is configurable in `$HOME/.config/pi_jukebox/pi_jukebox.conf`
+- Start jukebox:
+```bash
+pi_jukebox
+```
+
 - or make it autostart with adding this entry to `/etc/rc.local` before `exit 0`
 
 ```bash
-su pi -c "python3 /path/to/jukebox.py > /dev/null 2>&1"
+su pi -c "pi_jukebox > /dev/null 2>&1"
 ```
 
 ## Notes
