@@ -7,7 +7,7 @@ My 3 y.o. kid likes to listen to music, but I couldn't find music player with
 easy enough UI for her to operate by herself. I've got some free time after
 work, so why not?
 
-## DISCLAIMER
+## Disclaimer
 This is a home project, code is shit.
 
 ## Requirements
