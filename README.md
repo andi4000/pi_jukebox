@@ -25,7 +25,8 @@ This is a home project, code is shit.
 3. Use `gpio readall` and `pinout` to find out pin numbering (see "Useful
    Development Tools" below)
 4. Configure the BCM pin numbering for the buttons and LEDs(from `gpio readall`)
-   in `jukebox.py` script
+   in config file `$HOME/.config/pi_jukebox/pi_jukebox.conf` (file created after
+   first run)
 
 TODO: show my setup
 
