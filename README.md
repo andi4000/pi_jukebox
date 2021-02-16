@@ -46,7 +46,7 @@ pi_jukebox
 - or make it autostart with adding this entry to `/etc/rc.local` before `exit 0`
 
 ```bash
-su pi -c "pi_jukebox > /dev/null 2>&1"
+su pi -lc "pi_jukebox > /dev/null 2>&1"
 ```
 
 ## Notes
