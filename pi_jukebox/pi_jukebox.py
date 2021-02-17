@@ -86,8 +86,8 @@ def _load_GPIO_config(config: configparser.ConfigParser):
     BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
 
     logging.debug("GPIO configurations:")
-    logging.debug(f"PIN_BUTTONS: {PIN_BUTTONS}")
-    logging.debug(f"PIN_LEDS: {PIN_LEDS}")
+    logging.debug("PIN_BUTTONS: %s", str(PIN_BUTTONS))
+    logging.debug("PIN_LEDS: %s", str(PIN_LEDS))
 
 
 def _load_player_config(config: configparser.ConfigParser):
@@ -103,8 +103,8 @@ def _find_songs(music_folder: str) -> list:
     # TODO: add support for other audio files
     found_files = glob.glob(f"{music_folder}/*.mp3")
 
-    logging.info(f"Found {len(found_files)} songs")
-    logging.debug(f"found following files: {found_files}")
+    logging.info("Found %d songs", len(found_files))
+    logging.debug("found following files: %s", str(found_files))
     found_files.sort()
     return found_files
 
@@ -122,10 +122,10 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
 
     for i in range(len(_g_songs)):
         if i >= len(PIN_BUTTONS):
-            logging.info(f"Ignoring song because no button left: {_g_songs[i]}")
+            logging.info("Ignoring song because no button left: %s", str(_g_songs[i]))
             continue
 
-        logging.info(f"Initializing button for {_g_songs[i]}")
+        logging.info("Initializing button for %s", str(_g_songs[i]))
 
         # Wrapper for button callback, workaround for buggy GPIO library
         # "falling" because of the Pull-Up (button state defaults to 1)
@@ -149,7 +149,7 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
 
 
 def _play_song(song_path: str):
-    logging.info(f"playing media: {song_path}")
+    logging.info("playing media: %s", str(song_path))
     _g_player.stop()
     _g_player.set_media(_g_vlc_instance.media_new(song_path))
     _g_player.play()
@@ -172,13 +172,13 @@ def _cb_buttonpress(channel):
     global _g_songs
 
     idx = PIN_BUTTONS.index(channel)
-    logging.debug(f"button press {idx}")
+    logging.debug("button press %d", idx)
 
     assert idx < len(_g_songs), f"song index non-existent: {idx}"
     song_path = _g_songs[idx]
 
     if _g_active_song_idx is None:
-        logging.info(f"Playing new song #{idx}")
+        logging.info("Playing new song #%d", idx)
         _g_active_song_idx = idx
         _play_song(song_path)
     elif _g_active_song_idx is idx:
@@ -187,7 +187,7 @@ def _cb_buttonpress(channel):
             _g_active_song_idx = None
             _stop_playback()
     else:
-        logging.info(f"Stopping playback and playing new song #{idx}")
+        logging.info("Stopping playback and playing new song #%d", idx)
         _g_active_song_idx = idx
         _play_song(song_path)
 
@@ -203,7 +203,7 @@ def _is_song_ending(song_end_position: float) -> bool:
 
     is_song_ending = False
     song_position = _g_player.get_position()
-    logging.debug(f"song position = {song_position:.4f}")
+    logging.debug("song position = %.4f", song_position)
     # value between 0.0 and 1.0
     # -1 means playback is stopped
 
@@ -272,7 +272,7 @@ def _create_initial_config_file(str_config_file: str):
     with open(str_config_file, "w") as file_obj:
         config.write(file_obj)
 
-    logging.info(f"Config file created: {str_config_file}")
+    logging.info("Config file created: %s", str_config_file)
 
 
 def _init_music_folder(config: configparser.ConfigParser):
@@ -283,9 +283,9 @@ def _init_music_folder(config: configparser.ConfigParser):
     music_folder = config["default"]["music_folder"]
 
     if os.path.isdir(music_folder):
-        logging.info(f"Music folder found: {music_folder}")
+        logging.info("Music folder found: %s", music_folder)
     else:
-        logging.info(f"Music folder nonexistent, creating: {music_folder}")
+        logging.info("Music folder nonexistent, creating: %s", music_folder)
         os.makedirs(music_folder)
 
 
@@ -301,7 +301,7 @@ def main():
     config_file = _get_default_config_file()
 
     if os.path.isfile(config_file):
-        logging.info(f"Config file found: {config_file}")
+        logging.info("Config file found: %s", config_file)
     else:
         _create_initial_config_file(config_file)
 
