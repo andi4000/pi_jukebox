@@ -120,12 +120,12 @@ def _init_songs_button_binding(config: configparser.ConfigParser):
     # TODO: figure out if lifecycle of this could cause problem
     button_handlers = []
 
-    for i in range(len(_g_songs)):
+    for i, song in enumerate(_g_songs):
         if i >= len(PIN_BUTTONS):
-            logging.info("Ignoring song because no button left: %s", str(_g_songs[i]))
+            logging.info("Ignoring song because no button left: %s", song)
             continue
 
-        logging.info("Initializing button for %s", str(_g_songs[i]))
+        logging.info("Initializing button for %s", song)
 
         # Wrapper for button callback, workaround for buggy GPIO library
         # "falling" because of the Pull-Up (button state defaults to 1)
