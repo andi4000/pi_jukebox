@@ -17,7 +17,7 @@ from appdirs import AppDirs  # type: ignore
 
 try:
     import RPi.GPIO as GPIO  # type: ignore
-except RuntimeError:
+except (RuntimeError, ModuleNotFoundError):
     import Mock.GPIO as GPIO  # type: ignore
 
 import vlc  # type: ignore
