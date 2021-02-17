@@ -33,17 +33,13 @@ class ButtonHandler(threading.Thread):
     def read(self, *args):
         pinval = GPIO.input(self.pin)  # pylint: disable=E1111
 
-        # fmt: off
-        if (
-            (pinval == 0 and self.lastpinval == 1)
-            and (self.edge in ["falling", "both"])
-        ) or (
-            (pinval == 1 and self.lastpinval == 0)
-            and (self.edge in ["rising", "both"])
+        pin_rises = pinval == 1 and self.lastpinval == 0
+        pin_falls = pinval == 0 and self.lastpinval == 1
+
+        if (pin_falls and (self.edge in ["falling", "both"])) or (
+            pin_rises and (self.edge in ["rising", "both"])
         ):
             self.func(*args)
-
-        # fmt: on
 
         self.lastpinval = pinval
         self.lock.release()
