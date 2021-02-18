@@ -29,17 +29,18 @@ class PiJukebox:
     IS_DEBUG = False
     LOOP_HZ = 20
 
-    # IO Definitions
-    PIN_TAILSWITCH = -1
-    PIN_BUTTONS = []  # type: List[int]
-    PIN_LEDS = []  # type: List[int]
-    BTN_BOUNCE_TIME_MS = -1
-
-    SONG_END_POSITION = -1.0  # for VLC get_position()
     DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
     DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
 
     def __init__(self):
+        # IO Definitions
+        self.pin_tailswitch = -1
+        self.pin_buttons = []  # type: List[int]
+        self.pin_leds = []  # type: List[int]
+        self.btn_bounce_time_ms = -1
+
+        self.song_end_position = -1.0  # for VLC get_position()
+
         self._vlc_instance = None  # type: vlc.Instance
         self._player = None  # type: vlc.MediaPlayer
 
@@ -65,15 +66,15 @@ class PiJukebox:
     def _init_gpio(self, config: configparser.ConfigParser):
         logging.info("Initializing GPIO")
 
-        self._load_GPIO_config(config)
+        self._load_gpio_config(config)
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        GPIO.setup(self.PIN_LEDS, GPIO.OUT)
-        GPIO.output(self.PIN_LEDS, [False] * len(self.PIN_LEDS))  # Turn off all LEDs
+        GPIO.setup(self.pin_leds, GPIO.OUT)
+        GPIO.output(self.pin_leds, [False] * len(self.pin_leds))  # Turn off all LEDs
 
-        GPIO.setup(self.PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.pin_buttons, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         logging.info("GPIO Pins initialized")
 
     def _init_music_player(self, config: configparser.ConfigParser):
@@ -85,21 +86,21 @@ class PiJukebox:
         self._player.audio_set_volume(100)
         logging.info("VLC initialized")
 
-    def _load_GPIO_config(self, config: configparser.ConfigParser):
+    def _load_gpio_config(self, config: configparser.ConfigParser):
         assert "GPIO" in config
 
-        self.PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
-        self.PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
-        self.PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
-        self.BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
+        self.pin_buttons = json.loads(config.get("GPIO", "pin_buttons"))
+        self.pin_leds = json.loads(config.get("GPIO", "pin_leds"))
+        self.pin_tailswitch = config["GPIO"].getint("pin_tailswitch")
+        self.btn_bounce_time_ms = config["GPIO"].getint("bounce_time_ms")
 
         logging.debug("GPIO configurations:")
-        logging.debug("PIN_BUTTONS: %s", str(self.PIN_BUTTONS))
-        logging.debug("PIN_LEDS: %s", str(self.PIN_LEDS))
+        logging.debug("PIN_BUTTONS: %s", str(self.pin_buttons))
+        logging.debug("PIN_LEDS: %s", str(self.pin_leds))
 
     def _load_player_config(self, config: configparser.ConfigParser):
         assert "player" in config
-        self.SONG_END_POSITION = config["player"].getfloat("song_end_position")
+        self.song_end_position = config["player"].getfloat("song_end_position")
 
     @staticmethod
     def _find_songs(music_folder: str) -> list:
@@ -125,7 +126,7 @@ class PiJukebox:
         button_handlers = []
 
         for i, song in enumerate(self._songs):
-            if i >= len(self.PIN_BUTTONS):
+            if i >= len(self.pin_buttons):
                 logging.info("Ignoring song because no button left: %s", song)
                 continue
 
@@ -135,24 +136,24 @@ class PiJukebox:
             # "falling" because of the Pull-Up (button state defaults to 1)
             button_handlers.append(
                 ButtonHandler(
-                    self.PIN_BUTTONS[i],
+                    self.pin_buttons[i],
                     self._cb_buttonpress,
                     edge="falling",
-                    bouncetime=self.BTN_BOUNCE_TIME_MS,
+                    bouncetime=self.btn_bounce_time_ms,
                 )
             )
 
             # bouncetime here is buggy, therefore extra callback wrapper ButtonHandler
             GPIO.add_event_detect(
-                self.PIN_BUTTONS[i],
+                self.pin_buttons[i],
                 GPIO.RISING,
                 callback=button_handlers[i],
                 bouncetime=10,
             )
 
-            GPIO.output(self.PIN_LEDS[i], True)
+            GPIO.output(self.pin_leds[i], True)
             sleep(0.1)
-            GPIO.output(self.PIN_LEDS[i], False)
+            GPIO.output(self.pin_leds[i], False)
 
     def _play_song(self, song_path: str):
         logging.info("playing media: %s", str(song_path))
@@ -172,7 +173,7 @@ class PiJukebox:
         Logic for playing song, considering the status of playback (is currently
         playing or not)
         """
-        idx = self.PIN_BUTTONS.index(channel)
+        idx = self.pin_buttons.index(channel)
         logging.debug("button press %d", idx)
 
         assert idx < len(self._songs), f"song index non-existent: {idx}"
@@ -194,7 +195,7 @@ class PiJukebox:
 
     def _shutdown_routine(self):
         logging.debug("Turning off LEDS and shutting down")
-        GPIO.output(self.PIN_LEDS, [False] * len(self.PIN_LEDS))
+        GPIO.output(self.pin_leds, [False] * len(self.pin_leds))
         GPIO.cleanup()
 
     def _is_song_ending(self, song_end_position: float) -> bool:
@@ -216,16 +217,16 @@ class PiJukebox:
         Routine for each loop, sets LED status based on playback status (playing or
         ends)
         """
-        led_states = [False] * len(self.PIN_LEDS)
+        led_states = [False] * len(self.pin_leds)
 
         if self._active_song_idx is not None:
-            if self._is_song_ending(self.SONG_END_POSITION):
+            if self._is_song_ending(self.song_end_position):
                 logging.info("Song reaches end")
                 self._active_song_idx = None
             else:
                 led_states[self._active_song_idx] = True
 
-        GPIO.output(self.PIN_LEDS, led_states)
+        GPIO.output(self.pin_leds, led_states)
 
     def _get_default_config_file(self) -> str:
         app_name = __name__.split(".")[0]
