@@ -35,17 +35,19 @@ class PiJukebox:
     def __init__(self):
         # IO Definitions
         self.pin_tailswitch = -1
-        self.pin_buttons = []  # type: List[int]
-        self.pin_leds = []  # type: List[int]
+        self.pin_buttons: List[int] = []
+        self.pin_leds: List[int] = []
         self.btn_bounce_time_ms = -1
 
         self.song_end_position = -1.0  # for VLC get_position()
 
-        self._vlc_instance = None  # type: vlc.Instance
-        self._player = None  # type: vlc.MediaPlayer
+        self._vlc_instance: Union[None, vlc.Instance] = None
+        self._player: Union[None, vlc.MediaPlayer] = None
 
         self._active_song_idx = None  # type: Union[None, int]
-        self._songs = []  # to hold mp3 file paths
+
+        # to hold mp3 file paths
+        self._songs: List[str] = []
 
     @staticmethod
     def _init_music_folder(config: configparser.ConfigParser):
