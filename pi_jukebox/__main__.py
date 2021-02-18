@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-from . import pi_jukebox
+from .pi_jukebox import PiJukebox
 
 if __name__ == "__main__":
-    pi_jukebox.main()
+    app = PiJukebox()
+    app.init()
+    app.run()
