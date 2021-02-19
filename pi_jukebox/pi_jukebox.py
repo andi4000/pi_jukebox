@@ -282,6 +282,9 @@ class PiJukebox:
 
         config_file = self._get_default_config_file()
 
+        version = pkg_resources.get_distribution("pi_jukebox").version
+        logging.info("Initializing pi_jukebox v%s", version)
+
         if os.path.isfile(config_file):
             logging.info("Config file found: %s", config_file)
         else:
