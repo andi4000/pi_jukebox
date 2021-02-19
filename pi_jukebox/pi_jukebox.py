@@ -41,10 +41,10 @@ class PiJukebox:
 
         self.song_end_position = -1.0  # for VLC get_position()
 
-        self._vlc_instance: Union[None, vlc.Instance] = None
-        self._player: Union[None, vlc.MediaPlayer] = None
+        self._vlc_instance: vlc.Instance = None
+        self._player: vlc.MediaPlayer = None
 
-        self._active_song_idx = None  # type: Union[None, int]
+        self._active_song_idx: Union[None, int] = None
 
         # to hold mp3 file paths
         self._songs: List[str] = []
