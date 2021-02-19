@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+
 from .pi_jukebox import PiJukebox
 
 
