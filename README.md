@@ -1,11 +1,18 @@
 # Jukebox with GPIO Buttons
 
-Simple jukebox with Raspberry Pi. Songs will be played when buttons are pressed.
+Simple jukebox with Raspberry Pi.
 
 ## Background
 My 3 y.o. kid likes to listen to music, but I couldn't find music player with
-easy enough UI for her to operate by herself. I've got some free time after
-work, so why not?
+easy enough UI for her to operate by herself. Interestingly there is no
+plug-and-play projects/solution to this. So, following the DIYer mantra:
+
+> How hard can it be?
+
+## How It Works
+User's parent provides audio files (`mp3`) in a default location. The files will
+be mapped to each button wired to the Raspberry Pi's GPIO input. Button press
+will trigger play/stop of the audio file.
 
 ## Disclaimer
 This is a home project, code is shit.
@@ -34,6 +41,8 @@ TODO: show my setup
 ```bash
 pip3 install git+ssh://git@gitlab.com/bagong/pi_jukebox#egg=pi_jukebox
 ```
+
+Run `pi_jukebox` to populate initial settings.
 
 ## Usage
 - Put mp3 files into to default location: `$HOME/pi_jukebox/`

@@ -24,301 +24,288 @@ import vlc  # type: ignore
 
 from .button_handler import ButtonHandler
 
-IS_DEBUG = False
-LOOP_HZ = 20
 
-# IO Definitions
-PIN_TAILSWITCH = -1
-PIN_BUTTONS = []  # type: List[int]
-PIN_LEDS = []  # type: List[int]
-BTN_BOUNCE_TIME_MS = -1
+class PiJukebox:
+    IS_DEBUG = False
+    LOOP_HZ = 20
 
-SONG_END_POSITION = -1.0  # for VLC get_position()
-DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
-DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
+    DEFAULT_MUSIC_FOLDER_NAME = "pi_jukebox"
+    DEFAULT_CONFIG_FILENAME = "pi_jukebox.conf"
 
-_g_vlc_instance = None  # type: vlc.Instance
-_g_player = None  # type: vlc.MediaPlayer
+    def __init__(self):
+        # IO Definitions
+        self.pin_tailswitch = -1
+        self.pin_buttons: List[int] = []
+        self.pin_leds: List[int] = []
+        self.btn_bounce_time_ms = -1
 
-_g_active_song_idx = None  # type: Union[None, int]
-_g_songs = []  # to hold mp3 file paths
+        self.song_end_position = -1.0  # for VLC get_position()
 
+        self._vlc_instance: Union[None, vlc.Instance] = None
+        self._player: Union[None, vlc.MediaPlayer] = None
 
-def _init_gpio(config: configparser.ConfigParser):
-    logging.info("Initializing GPIO")
+        self._active_song_idx = None  # type: Union[None, int]
 
-    _load_GPIO_config(config)
+        # to hold mp3 file paths
+        self._songs: List[str] = []
 
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-
-    GPIO.setup(PIN_LEDS, GPIO.OUT)
-    GPIO.output(PIN_LEDS, [False] * len(PIN_LEDS))  # Turn off all LEDs
-
-    GPIO.setup(PIN_BUTTONS, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    logging.info("GPIO Pins initialized")
-
-
-def _init_music_player(config: configparser.ConfigParser):
-    global _g_vlc_instance
-    global _g_player
-
-    _load_player_config(config)
-
-    logging.info("Initializing VLC")
-    _g_vlc_instance = vlc.Instance("--aout=alsa")
-    _g_player = _g_vlc_instance.media_player_new()
-    _g_player.audio_set_volume(100)
-    logging.info("VLC initialized")
-
-
-def _load_GPIO_config(config: configparser.ConfigParser):
-    global PIN_BUTTONS
-    global PIN_LEDS
-    global PIN_TAILSWITCH
-    global BTN_BOUNCE_TIME_MS
-
-    assert "GPIO" in config
-
-    PIN_BUTTONS = json.loads(config.get("GPIO", "pin_buttons"))
-    PIN_LEDS = json.loads(config.get("GPIO", "pin_leds"))
-    PIN_TAILSWITCH = config["GPIO"].getint("pin_tailswitch")
-    BTN_BOUNCE_TIME_MS = config["GPIO"].getint("bounce_time_ms")
-
-    logging.debug("GPIO configurations:")
-    logging.debug("PIN_BUTTONS: %s", str(PIN_BUTTONS))
-    logging.debug("PIN_LEDS: %s", str(PIN_LEDS))
-
-
-def _load_player_config(config: configparser.ConfigParser):
-    global SONG_END_POSITION
-    assert "player" in config
-    SONG_END_POSITION = config["player"].getfloat("song_end_position")
-
-
-def _find_songs(music_folder: str) -> list:
-    if not os.path.isdir(music_folder):
-        raise FileNotFoundError(f"Music folder does not exists: {music_folder}")
-
-    # TODO: add support for other audio files
-    found_files = glob.glob(f"{music_folder}/*.mp3")
-
-    logging.info("Found %d songs", len(found_files))
-    logging.debug("found following files: %s", str(found_files))
-    found_files.sort()
-    return found_files
-
-
-def _init_songs_button_binding(config: configparser.ConfigParser):
-    global _g_songs
-    logging.info("Initializing songs")
-
-    music_folder = config["default"]["music_folder"]
-
-    _g_songs = _find_songs(music_folder)
-
-    # TODO: figure out if lifecycle of this could cause problem
-    button_handlers = []
-
-    for i, song in enumerate(_g_songs):
-        if i >= len(PIN_BUTTONS):
-            logging.info("Ignoring song because no button left: %s", song)
-            continue
-
-        logging.info("Initializing button for %s", song)
-
-        # Wrapper for button callback, workaround for buggy GPIO library
-        # "falling" because of the Pull-Up (button state defaults to 1)
-        button_handlers.append(
-            ButtonHandler(
-                PIN_BUTTONS[i],
-                _cb_buttonpress,
-                edge="falling",
-                bouncetime=BTN_BOUNCE_TIME_MS,
+    @staticmethod
+    def _init_music_folder(config: configparser.ConfigParser):
+        if not config.has_option("default", "music_folder"):
+            logging.error(
+                "Invalid config file! Remove config file and let me recreate it."
             )
-        )
+            sys.exit(-1)
 
-        # bouncetime here is buggy, therefore extra callback wrapper ButtonHandler
-        GPIO.add_event_detect(
-            PIN_BUTTONS[i], GPIO.RISING, callback=button_handlers[i], bouncetime=10
-        )
+        music_folder = config["default"]["music_folder"]
 
-        GPIO.output(PIN_LEDS[i], True)
-        sleep(0.1)
-        GPIO.output(PIN_LEDS[i], False)
-
-
-def _play_song(song_path: str):
-    logging.info("playing media: %s", str(song_path))
-    _g_player.stop()
-    _g_player.set_media(_g_vlc_instance.media_new(song_path))
-    _g_player.play()
-
-    if IS_DEBUG:
-        _g_player.set_position(0.97)
-
-
-def _stop_playback():
-    """wrapper for vlc.stop()"""
-    _g_player.stop()
-
-
-def _cb_buttonpress(channel):
-    """
-    Logic for playing song, considering the status of playback (is currently
-    playing or not)
-    """
-    global _g_active_song_idx
-    global _g_songs
-
-    idx = PIN_BUTTONS.index(channel)
-    logging.debug("button press %d", idx)
-
-    assert idx < len(_g_songs), f"song index non-existent: {idx}"
-    song_path = _g_songs[idx]
-
-    if _g_active_song_idx is None:
-        logging.info("Playing new song #%d", idx)
-        _g_active_song_idx = idx
-        _play_song(song_path)
-    elif _g_active_song_idx is idx:
-        if _g_player.is_playing():
-            logging.info("Stopping active playback")
-            _g_active_song_idx = None
-            _stop_playback()
-    else:
-        logging.info("Stopping playback and playing new song #%d", idx)
-        _g_active_song_idx = idx
-        _play_song(song_path)
-
-
-def _shutdown_routine():
-    logging.debug("Turning off LEDS and shutting down")
-    GPIO.output(PIN_LEDS, [False] * len(PIN_LEDS))
-    GPIO.cleanup()
-
-
-def _is_song_ending(song_end_position: float) -> bool:
-    assert song_end_position > 0.0
-
-    is_song_ending = False
-    song_position = _g_player.get_position()
-    logging.debug("song position = %.4f", song_position)
-    # value between 0.0 and 1.0
-    # -1 means playback is stopped
-
-    if song_position > song_end_position:
-        is_song_ending = True
-
-    return is_song_ending
-
-
-def _loop_routine():
-    """
-    Routine for each loop, sets LED status based on playback status (playing or
-    ends)
-    """
-    global _g_active_song_idx
-
-    led_states = [False] * len(PIN_LEDS)
-
-    if _g_active_song_idx is not None:
-        if _is_song_ending(SONG_END_POSITION):
-            logging.info("Song reaches end")
-            _g_active_song_idx = None
+        if os.path.isdir(music_folder):
+            logging.info("Music folder found: %s", music_folder)
         else:
-            led_states[_g_active_song_idx] = True
+            logging.info("Music folder nonexistent, creating: %s", music_folder)
+            os.makedirs(music_folder)
 
-    GPIO.output(PIN_LEDS, led_states)
+    def _init_gpio(self, config: configparser.ConfigParser):
+        logging.info("Initializing GPIO")
 
+        self._load_gpio_config(config)
 
-def _get_default_config_file() -> str:
-    str_config_file = ""
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
 
-    app_name = __name__.split(".")[0]
-    dirs = AppDirs(appname=app_name)
+        GPIO.setup(self.pin_leds, GPIO.OUT)
+        GPIO.output(self.pin_leds, [False] * len(self.pin_leds))  # Turn off all LEDs
 
-    # On Linux: $HOME/.config/pi_jukebox/pi_jukebox.conf
-    str_config_file = dirs.user_config_dir + "/" + DEFAULT_CONFIG_FILENAME
+        GPIO.setup(self.pin_buttons, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        logging.info("GPIO Pins initialized")
 
-    return str_config_file
+    def _init_music_player(self, config: configparser.ConfigParser):
+        self._load_player_config(config)
 
+        logging.info("Initializing VLC")
+        self._vlc_instance = vlc.Instance("--aout=alsa")
+        self._player = self._vlc_instance.media_player_new()
+        self._player.audio_set_volume(100)
+        logging.info("VLC initialized")
 
-def _create_initial_config_file(str_config_file: str):
-    """
-    Create initial config file with only one field: music_folder
-    Defaults to $HOME/pi_jukebox
-    """
-    logging.info("Creating initial config file..")
+    def _load_gpio_config(self, config: configparser.ConfigParser):
+        assert "GPIO" in config
 
-    default_config_file = pkg_resources.resource_filename(
-        __name__, "config/default.conf"
-    )
+        self.pin_buttons = json.loads(config.get("GPIO", "pin_buttons"))
+        self.pin_leds = json.loads(config.get("GPIO", "pin_leds"))
+        self.pin_tailswitch = config["GPIO"].getint("pin_tailswitch")
+        self.btn_bounce_time_ms = config["GPIO"].getint("bounce_time_ms")
 
-    config = configparser.ConfigParser()
+        logging.debug("GPIO configurations:")
+        logging.debug("PIN_BUTTONS: %s", str(self.pin_buttons))
+        logging.debug("PIN_LEDS: %s", str(self.pin_leds))
 
-    config.read(default_config_file)
-    assert "default" in config
-    assert "player" in config
-    assert "GPIO" in config
+    def _load_player_config(self, config: configparser.ConfigParser):
+        assert "player" in config
+        self.song_end_position = config["player"].getfloat("song_end_position")
 
-    str_music_folder = os.path.expanduser("~") + "/" + DEFAULT_MUSIC_FOLDER_NAME
+    @staticmethod
+    def _find_songs(music_folder: str) -> list:
+        if not os.path.isdir(music_folder):
+            raise FileNotFoundError(f"Music folder does not exists: {music_folder}")
 
-    config["default"] = {}
-    config["default"]["music_folder"] = str_music_folder
+        # TODO: add support for other audio files
+        found_files = glob.glob(f"{music_folder}/*.mp3")
 
-    os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
+        logging.info("Found %d songs", len(found_files))
+        logging.debug("found following files: %s", str(found_files))
+        found_files.sort()
+        return found_files
 
-    with open(str_config_file, "w") as file_obj:
-        config.write(file_obj)
+    def _init_songs_button_binding(self, config: configparser.ConfigParser):
+        logging.info("Initializing songs")
 
-    logging.info("Config file created: %s", str_config_file)
+        music_folder = config["default"]["music_folder"]
 
+        self._songs = self._find_songs(music_folder)
 
-def _init_music_folder(config: configparser.ConfigParser):
-    if not config.has_option("default", "music_folder"):
-        logging.error("Invalid config file! Remove config file and let me recreate it.")
-        sys.exit(-1)
+        # TODO: figure out if lifecycle of this could cause problem
+        button_handlers = []
 
-    music_folder = config["default"]["music_folder"]
+        for i, song in enumerate(self._songs):
+            if i >= len(self.pin_buttons):
+                logging.info("Ignoring song because no button left: %s", song)
+                continue
 
-    if os.path.isdir(music_folder):
-        logging.info("Music folder found: %s", music_folder)
-    else:
-        logging.info("Music folder nonexistent, creating: %s", music_folder)
-        os.makedirs(music_folder)
+            logging.info("Initializing button for %s", song)
 
+            # Wrapper for button callback, workaround for buggy GPIO library
+            # "falling" because of the Pull-Up (button state defaults to 1)
+            button_handlers.append(
+                ButtonHandler(
+                    self.pin_buttons[i],
+                    self._cb_buttonpress,
+                    edge="falling",
+                    bouncetime=self.btn_bounce_time_ms,
+                )
+            )
 
-def main():
-    logging_level = logging.INFO
-    if IS_DEBUG:
-        logging_level = logging.DEBUG
+            # bouncetime here is buggy, therefore extra callback wrapper ButtonHandler
+            GPIO.add_event_detect(
+                self.pin_buttons[i],
+                GPIO.RISING,
+                callback=button_handlers[i],
+                bouncetime=10,
+            )
 
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s %(message)s", level=logging_level
-    )
+            GPIO.output(self.pin_leds[i], True)
+            sleep(0.1)
+            GPIO.output(self.pin_leds[i], False)
 
-    config_file = _get_default_config_file()
+    def _play_song(self, song_path: str):
+        logging.info("playing media: %s", str(song_path))
+        self._player.stop()
+        self._player.set_media(self._vlc_instance.media_new(song_path))
+        self._player.play()
 
-    if os.path.isfile(config_file):
-        logging.info("Config file found: %s", config_file)
-    else:
-        _create_initial_config_file(config_file)
+        if self.IS_DEBUG:
+            self._player.set_position(0.97)
 
-    config = configparser.ConfigParser()
-    config.read(config_file)
+    def _stop_playback(self):
+        """wrapper for vlc.stop()"""
+        self._player.stop()
 
-    _init_music_folder(config)
-    _init_gpio(config)
-    _init_music_player(config)
-    _init_songs_button_binding(config)
-    logging.info("Jukebox ready")
+    def _cb_buttonpress(self, channel: int):
+        """
+        Logic for playing song, considering the status of playback (is currently
+        playing or not)
+        """
+        idx = self.pin_buttons.index(channel)
+        logging.debug("button press %d", idx)
 
-    while True:
-        try:
-            _loop_routine()
-            sleep(1.0 / float(LOOP_HZ))
-        except KeyboardInterrupt:
-            logging.info("Exiting program")
-            _shutdown_routine()
-            sys.exit()
+        assert idx < len(self._songs), f"song index non-existent: {idx}"
+        song_path = self._songs[idx]
+
+        if self._active_song_idx is None:
+            logging.info("Playing new song #%d", idx)
+            self._active_song_idx = idx
+            self._play_song(song_path)
+        elif self._active_song_idx is idx:
+            if self._player.is_playing():
+                logging.info("Stopping active playback")
+                self._active_song_idx = None
+                self._stop_playback()
+        else:
+            logging.info("Stopping playback and playing new song #%d", idx)
+            self._active_song_idx = idx
+            self._play_song(song_path)
+
+    def _shutdown_routine(self):
+        logging.debug("Turning off LEDS and shutting down")
+        GPIO.output(self.pin_leds, [False] * len(self.pin_leds))
+        GPIO.cleanup()
+
+    def _is_song_ending(self, song_end_position: float) -> bool:
+        assert song_end_position > 0.0
+
+        is_song_ending = False
+        song_position = self._player.get_position()
+        logging.debug("song position = %.4f", song_position)
+        # value between 0.0 and 1.0
+        # -1 means playback is stopped
+
+        if song_position > song_end_position:
+            is_song_ending = True
+
+        return is_song_ending
+
+    def _loop_routine(self):
+        """
+        Routine for each loop, sets LED status based on playback status (playing or
+        ends)
+        """
+        led_states = [False] * len(self.pin_leds)
+
+        if self._active_song_idx is not None:
+            if self._is_song_ending(self.song_end_position):
+                logging.info("Song reaches end")
+                self._active_song_idx = None
+            else:
+                led_states[self._active_song_idx] = True
+
+        GPIO.output(self.pin_leds, led_states)
+
+    def _get_default_config_file(self) -> str:
+        app_name = __name__.split(".")[0]
+        dirs = AppDirs(appname=app_name)
+
+        # On Linux: $HOME/.config/pi_jukebox/pi_jukebox.conf
+        str_config_file = dirs.user_config_dir + "/" + self.DEFAULT_CONFIG_FILENAME
+
+        return str_config_file
+
+    def _create_initial_config_file(self, str_config_file: str):
+        """
+        Create initial config file with only one field: music_folder
+        Defaults to $HOME/pi_jukebox
+        """
+        logging.info("Creating initial config file..")
+
+        default_config_file = pkg_resources.resource_filename(
+            __name__, "config/default.conf"
+        )
+
+        config = configparser.ConfigParser()
+
+        config.read(default_config_file)
+        assert "default" in config
+        assert "player" in config
+        assert "GPIO" in config
+
+        str_music_folder = (
+            os.path.expanduser("~") + "/" + self.DEFAULT_MUSIC_FOLDER_NAME
+        )
+
+        config["default"] = {}
+        config["default"]["music_folder"] = str_music_folder
+
+        os.makedirs(os.path.dirname(str_config_file), exist_ok=True)
+
+        with open(str_config_file, "w") as file_obj:
+            config.write(file_obj)
+
+        logging.info("Config file created: %s", str_config_file)
+
+    def init(self):
+        logging_level = logging.INFO
+        if self.IS_DEBUG:
+            logging_level = logging.DEBUG
+
+        logging.basicConfig(
+            format="%(asctime)s %(levelname)s %(message)s", level=logging_level
+        )
+
+        config_file = self._get_default_config_file()
+
+        version = pkg_resources.get_distribution("pi_jukebox").version
+        logging.info("Initializing pi_jukebox v%s", version)
+
+        if os.path.isfile(config_file):
+            logging.info("Config file found: %s", config_file)
+        else:
+            self._create_initial_config_file(config_file)
+
+        config = configparser.ConfigParser()
+        config.read(config_file)
+
+        self._init_music_folder(config)
+        self._init_gpio(config)
+        self._init_music_player(config)
+        self._init_songs_button_binding(config)
+        logging.info("Jukebox ready")
+
+    def run(self):
+        logging.info("Entering main loop")
+        while True:
+            try:
+                self._loop_routine()
+                sleep(1.0 / float(self.LOOP_HZ))
+            except KeyboardInterrupt:
+                logging.info("Exiting program")
+                self._shutdown_routine()
+                sys.exit()
