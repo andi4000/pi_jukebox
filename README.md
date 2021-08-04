@@ -2,6 +2,8 @@
 
 Simple jukebox with Raspberry Pi.
 
+![Jukebox headshot](misc/jukebox_01.jpg)
+
 ## Background
 My 3 y.o. kid likes to listen to music, but I couldn't find music player with
 easy enough UI for her to operate by herself. Interestingly there is no
@@ -37,7 +39,13 @@ This is a home project, code is shit.
    in config file `$HOME/.config/pi_jukebox/pi_jukebox.conf` (file created after
    first run)
 
-TODO: show my setup
+Here's how the internal looks like on my setup:
+
+![Jukebox insides](misc/jukebox_02.jpg)
+
+Bottom right is a USB-powered speaker. TODO: cable management
+
+TODO: Draw up wiring diagram
 
 ## Installation
 ```bash
